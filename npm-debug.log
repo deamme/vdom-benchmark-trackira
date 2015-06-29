@@ -1,0 +1,102 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/iojs',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'gulify',
+1 verbose cli   '--dev' ]
+2 info using npm@2.11.0
+3 info using node@v2.2.1
+4 verbose install initial load of /Users/laco/meteoar/app/vdom-benchmark-trackira/package.json
+5 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/browser-sync/package.json
+6 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/browserify/package.json
+7 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/del/package.json
+8 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/gulp/package.json
+9 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/gulp-gh-pages/package.json
+10 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/gulp-if/package.json
+11 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/gulp-sourcemaps/package.json
+12 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/gulp-uglify/package.json
+13 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/trackira/package.json
+14 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/vdom-benchmark-base/package.json
+15 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/vinyl-buffer/package.json
+16 verbose installManyTop reading scoped package data from /Users/laco/meteoar/app/vdom-benchmark-trackira/node_modules/vinyl-source-stream/package.json
+17 info package.json browser-sync@1.9.2 No license field.
+18 info package.json gulp-if@1.2.5 No license field.
+19 info package.json vdom-benchmark-base@0.2.2 license should be a valid SPDX license expression
+20 verbose readDependencies loading dependencies from /Users/laco/meteoar/app/vdom-benchmark-trackira/package.json
+21 silly cache add args [ 'gulify', null ]
+22 verbose cache add spec gulify
+23 silly cache add parsed spec { raw: 'gulify',
+23 silly cache add   scope: null,
+23 silly cache add   name: 'gulify',
+23 silly cache add   rawSpec: '',
+23 silly cache add   spec: '*',
+23 silly cache add   type: 'range' }
+24 silly addNamed gulify@*
+25 verbose addNamed "*" is a valid semver range for gulify
+26 silly addNameRange { name: 'gulify', range: '*', hasData: false }
+27 silly mapToRegistry name gulify
+28 silly mapToRegistry using default registry
+29 silly mapToRegistry registry https://registry.npmjs.org/
+30 silly mapToRegistry uri https://registry.npmjs.org/gulify
+31 verbose addNameRange registry:https://registry.npmjs.org/gulify not in flight; fetching
+32 verbose request uri https://registry.npmjs.org/gulify
+33 verbose request no auth needed
+34 info attempt registry request try #1 at 13:08:57
+35 verbose request id 0b10482877d8f1ec
+36 http request GET https://registry.npmjs.org/gulify
+37 http 404 https://registry.npmjs.org/gulify
+38 verbose headers { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+38 verbose headers   'content-type': 'application/json',
+38 verbose headers   'cache-control': 'max-age=0',
+38 verbose headers   'content-length': '51',
+38 verbose headers   'accept-ranges': 'bytes',
+38 verbose headers   date: 'Mon, 29 Jun 2015 11:08:56 GMT',
+38 verbose headers   via: '1.1 varnish',
+38 verbose headers   age: '0',
+38 verbose headers   connection: 'keep-alive',
+38 verbose headers   'x-served-by': 'cache-ams4120-AMS',
+38 verbose headers   'x-cache': 'MISS',
+38 verbose headers   'x-cache-hits': '0',
+38 verbose headers   'x-timer': 'S1435576136.033585,VS0,VE676' }
+39 silly get cb [ 404,
+39 silly get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+39 silly get     'content-type': 'application/json',
+39 silly get     'cache-control': 'max-age=0',
+39 silly get     'content-length': '51',
+39 silly get     'accept-ranges': 'bytes',
+39 silly get     date: 'Mon, 29 Jun 2015 11:08:56 GMT',
+39 silly get     via: '1.1 varnish',
+39 silly get     age: '0',
+39 silly get     connection: 'keep-alive',
+39 silly get     'x-served-by': 'cache-ams4120-AMS',
+39 silly get     'x-cache': 'MISS',
+39 silly get     'x-cache-hits': '0',
+39 silly get     'x-timer': 'S1435576136.033585,VS0,VE676' } ]
+40 verbose stack Error: 404 Not Found: gulify
+40 verbose stack     at CachingRegistryClient.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:245:14)
+40 verbose stack     at Request._callback (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:170:14)
+40 verbose stack     at Request.self.callback (/usr/local/lib/node_modules/npm/node_modules/request/request.js:368:22)
+40 verbose stack     at emitTwo (events.js:87:13)
+40 verbose stack     at Request.emit (events.js:172:7)
+40 verbose stack     at Request.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1219:14)
+40 verbose stack     at emitOne (events.js:82:20)
+40 verbose stack     at Request.emit (events.js:169:7)
+40 verbose stack     at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:1167:12)
+40 verbose stack     at emitNone (events.js:72:20)
+41 verbose statusCode 404
+42 verbose pkgid gulify
+43 verbose cwd /Users/laco/meteoar/app/vdom-benchmark-trackira
+44 error Darwin 13.4.0
+45 error argv "/usr/local/bin/iojs" "/usr/local/bin/npm" "install" "gulify" "--dev"
+46 error node v2.2.1
+47 error npm  v2.11.0
+48 error code E404
+49 error 404 Not Found: gulify
+49 error 404
+49 error 404 'gulify' is not in the npm registry.
+49 error 404 You should bug the author to publish it (or use the name yourself!)
+49 error 404 It was specified as a dependency of 'vdom-benchmark-react'
+49 error 404
+49 error 404 Note that you can also install from a
+49 error 404 tarball, folder, http url, or git url.
+50 verbose exit [ 1, true ]
