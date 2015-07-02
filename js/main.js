@@ -359,12 +359,24 @@ module.exports = init;
         var i,
             keys = {},
             key;
-        for (i = startIndex; i <= endIndex; ++i) {
-            key = children[i].key;
+
+        if (endIndex === 1) {
+
+            key = children[0].key;
             if (key !== undefined) {
-                keys[key] = i;
+                keys[key] = 0;
+            }
+        } else {
+
+            for (i = endIndex; i >= startIndex; i--) {
+
+                key = children[i].key;
+                if (key !== undefined) {
+                    keys[key] = i;
+                }
             }
         }
+
         return keys;
     }
 
@@ -385,19 +397,30 @@ module.exports = init;
             before,
             i = 0;
 
-        if (children == null || children.length === 0) {
+        if (children.length === 0) {
 
-            for (; i < toChildren.length; i++) {
-                container.appendChild(toChildren[i].render());
+            if (toChildren.length < 1) {
+
+                container.appendChild(toChildren[0].render(parent));
+            } else if (toChildren.length > 1) {
+
+                while (i < toChildren.length) {
+                    container.appendChild(toChildren[i++].render(parent));
+                }
             }
-        } else if (toChildren == null || toChildren.length === 0) {
+        } else if (toChildren.length < 1) {
 
-            while (i < children.length) {
-                children[i++].remove();
+            if (children.length === 1) {
+                children[0].remove();
+            } else {
+                while (i < children.length) {
+
+                    children[i++].remove();
+                }
             }
         } else {
 
-            if (children.length === 1 && toChildren.length === 1) {
+            if (children.length < 2 && toChildren.length < 2) {
 
                 // Implicit key with same type or explicit key with same key.
                 if (fromStartNode.key == null && fromStartNode.match(toStartNode) || fromStartNode.key != null && fromStartNode.key === toStartNode.key) {
@@ -456,6 +479,7 @@ module.exports = init;
                         container.insertBefore(toChildren[toStartIndex].render(parent), before);
                     }
                 } else if (toStartIndex > toEndIndex) {
+
                     for (; fromStartIndex <= fromEndIndex; fromStartIndex++) {
                         if (fromChildren[fromStartIndex] !== undefined) {
                             fromChildren[fromStartIndex].remove();
@@ -521,7 +545,7 @@ module.exports = init;
 
         if (this.children.length) {
 
-            if (this.children.length === 1 && this.children[0]) {
+            if (this.children.length === 1) {
 
                 element.appendChild(this.children[0].render(this));
             } else if (this.children.length > 1) {
@@ -566,7 +590,10 @@ module.exports = init;
 
         to.element = this.element;
 
-        patch(to.element, this.children, to.children, this.parent);
+        if (this.children !== to.children) {
+
+            patch(to.element, this.children, to.children, this.parent);
+        }
 
         return to.element;
     };
