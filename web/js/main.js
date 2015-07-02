@@ -2,7 +2,7 @@
 
 var benchmark = require('vdom-benchmark-base');
 var t = require('./trackira.js');
-console.log(t);
+
 var NAME = 'Trackira';
 var VERSION = t.version;
 
