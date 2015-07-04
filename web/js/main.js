@@ -1,7 +1,7 @@
 'use strict';
 
 var benchmark = require('vdom-benchmark-base');
-var t = require('./trackira.js');
+var t = require('trackira');
 
 var NAME = 'Trackira';
 var VERSION = t.version;
@@ -44,7 +44,7 @@ BenchmarkImpl.prototype.render = function() {
 };
 
 BenchmarkImpl.prototype.update = function() {
-    t.patch.node(this._node, new t.Element('div', {}, renderTree(this.b)));
+    t.patch(this._node, new t.Element('div', {}, renderTree(this.b)));
 };
 
 document.addEventListener('DOMContentLoaded', function(e) {
