@@ -21,7 +21,7 @@
     "trackira"
   ],
   "dependencies": {
-    "trackira": "^0.1.1-a",
+    "trackira": "^0.1.6-c",
     "vdom-benchmark-base": "^0.2.2"
   },
   "devDependencies": {
