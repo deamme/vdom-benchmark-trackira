@@ -1308,16 +1308,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * 'oldChildren' have only one child
      */
 			} else if (oldChildren.length === 1) {
-					do {
+
+					while (index < children.length) {
 
 						lastChild = children[index++];
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
 							updated = true;
+							break;
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
-					} while (index < children.length);
+					}
 
 					if (updated) {
 
@@ -1334,17 +1336,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
 				} else if (children.length === 1) {
 
-						do {
+						while (index < oldChildren.length) {
 
 							firstChild = oldChildren[index++];
 
 							if (firstChild.equalTo(lastChild)) {
 								firstChild.patch(lastChild);
 								updated = true;
-							} else {
-								firstChild.detach();
+								break;
 							}
-						} while (index < oldChildren.length);
+							// Detach the node
+							firstChild.detach();
+						}
 
 						if (updated) {
 							while (index < oldChildren.length) {
@@ -1370,7 +1373,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 							if (fromStartNode === undefined) {
 								fromStartIndex++;
-
 							} else if (fromEndNode === undefined) {
 								fromEndIndex--;
 							} else if (fromStartNode.equalTo(toStartNode)) {
@@ -1997,7 +1999,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-
 	var Tree = function Tree() {
 
 		this.init();
@@ -2073,6 +2074,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var bubbleEvent = function bubbleEvent(root, type) {
 
 		return function (e) {
+
 
 			e.isPropagationStopped = false;
 			e.delegateTarget = e.target;
