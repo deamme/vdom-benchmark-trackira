@@ -1297,7 +1297,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     */
 			if (oldChildren.length === 1 && children.length === 1) {
 
-				// Implicit key with same type or explicit key with same key.
 				if (firstChild.equalTo(lastChild)) {
 					firstChild.patch(lastChild);
 				} else {
@@ -1372,9 +1371,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						while (fromStartIndex <= fromEndIndex && toStartIndex <= toEndIndex) {
 
-							if (fromStartNode === undefined) {
+							if (fromStartNode == null) {
 								fromStartIndex++;
-							} else if (fromEndNode === undefined) {
+							} else if (fromEndNode == null) {
 								fromEndIndex--;
 							} else if (fromStartNode.equalTo(toStartNode)) {
 								fromStartNode.patch(toStartNode);
@@ -1398,7 +1397,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								toStartIndex++;
 							} else {
 
-								if (ChildrenMap === undefined) {
+								if (ChildrenMap == null) {
 									ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
 								}
 
@@ -1407,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								if (index) {
 
 									node = oldChildren[index];
-									oldChildren[index] = undefined;
+									oldChildren[index] = null;
 									node.patch(toStartNode);
 									container.insertBefore(node.node, fromStartNode.node);
 								} else {
@@ -1425,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						if (fromStartIndex > fromEndIndex) {
 
 							for (; toStartIndex <= toEndIndex; toStartIndex++) {
-								if (children[toEndIndex + 1] === undefined) {
+								if (children[toEndIndex + 1] == null) {
 									container.appendChild(children[toStartIndex].render());
 								} else {
 									container.insertBefore(children[toStartIndex].render(), children[toEndIndex + 1].node);
@@ -1434,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						} else if (toStartIndex > toEndIndex) {
 
 							for (; fromStartIndex <= fromEndIndex; fromStartIndex++) {
-								if (oldChildren[fromStartIndex] !== undefined) {
+								if (oldChildren[fromStartIndex] != null) {
 									oldChildren[fromStartIndex].detach();
 								}
 							}
@@ -1531,7 +1530,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		var attrName, previousAttrValue, attrValue;
 
 		if (previousAttr) {
-
 
 			for (attrName in previousAttr) {
 
