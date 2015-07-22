@@ -1607,11 +1607,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			// Patch / diff properties
-			patchProperties(node, ref.props, props);
-
+			if (props !== ref.props) {
+				patchProperties(node, ref.props, props);
+			}
 			// Patch / diff attributes
-			patchAttributes(node, ref.attrs, attrs);
-
+			if (attrs !== ref.attrs) {
+				patchAttributes(node, ref.attrs, attrs);
+			}
 			// Patch / diff children
 			if (children !== ref.children) {
 				patch(ref.node.shadowRoot ? ref.node.shadowRoot : ref.node, children, ref.children);
@@ -2525,7 +2527,6 @@ function initFromScript(scriptUrl, impl) {
 function initFromParentWindow(parent, name, version, id) {
   window.addEventListener('message', function(e) {
     var data = e.data;
-
     var type = data.type;
 
     if (type === 'tests') {
