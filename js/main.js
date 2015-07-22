@@ -1371,9 +1371,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						while (fromStartIndex <= fromEndIndex && toStartIndex <= toEndIndex) {
 
-							if (fromStartNode == null) {
+							if (fromStartNode === undefined) {
 								fromStartIndex++;
-							} else if (fromEndNode == null) {
+							} else if (fromEndNode === undefined) {
 								fromEndIndex--;
 							} else if (fromStartNode.equalTo(toStartNode)) {
 								fromStartNode.patch(toStartNode);
@@ -1397,7 +1397,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								toStartIndex++;
 							} else {
 
-								if (ChildrenMap == null) {
+								if (ChildrenMap === undefined) {
 									ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
 								}
 
@@ -1406,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								if (index) {
 
 									node = oldChildren[index];
-									oldChildren[index] = null;
+									oldChildren[index] = undefined;
 									node.patch(toStartNode);
 									container.insertBefore(node.node, fromStartNode.node);
 								} else {
@@ -1424,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						if (fromStartIndex > fromEndIndex) {
 
 							for (; toStartIndex <= toEndIndex; toStartIndex++) {
-								if (children[toEndIndex + 1] == null) {
+								if (children[toEndIndex + 1] === undefined) {
 									container.appendChild(children[toStartIndex].render());
 								} else {
 									container.insertBefore(children[toStartIndex].render(), children[toEndIndex + 1].node);
@@ -1433,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						} else if (toStartIndex > toEndIndex) {
 
 							for (; fromStartIndex <= fromEndIndex; fromStartIndex++) {
-								if (oldChildren[fromStartIndex] != null) {
+								if (oldChildren[fromStartIndex] !== undefined) {
 									oldChildren[fromStartIndex].detach();
 								}
 							}
@@ -1620,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			// Handle events
-			if (ref.events !== undefined) {
+			if (ref.events) {
 
 				node._handler = ref;
 			} else if (events !== undefined) {
@@ -2074,6 +2074,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var bubbleEvent = function bubbleEvent(root, type) {
 
 		return function (e) {
+
 
 			e.isPropagationStopped = false;
 			e.delegateTarget = e.target;
