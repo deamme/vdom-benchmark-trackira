@@ -1607,31 +1607,30 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			// Patch / diff properties
-			if (props !== ref.props) {
-				patchProperties(node, ref.props, props);
-			}
+			patchProperties(node, ref.props, props);
+
 			// Patch / diff attributes
-			if (attrs !== ref.attrs) {
-				patchAttributes(node, ref.attrs, attrs);
-			}
+			patchAttributes(node, ref.attrs, attrs);
 
 			// Patch / diff children
 			if (children !== ref.children) {
 				patch(ref.node.shadowRoot ? ref.node.shadowRoot : ref.node, children, ref.children);
 			}
+
 			// Handle events
-			if (ref.events) {
+			if (ref.events !== undefined) {
 
 				node._handler = ref;
-			} else if (events) {
+			} else if (events !== undefined) {
 
 				node._handler = undefined;
 			}
 
 			// Handle hooks
-			if (hooks && hooks.updated) {
-
-				hooks.updated(this, node);
+			if (hooks !== undefined) {
+				if (hooks.updated) {
+					hooks.updated(this, node);
+				}
 			}
 
 			return node;
@@ -2526,6 +2525,7 @@ function initFromScript(scriptUrl, impl) {
 function initFromParentWindow(parent, name, version, id) {
   window.addEventListener('message', function(e) {
     var data = e.data;
+
     var type = data.type;
 
     if (type === 'tests') {
