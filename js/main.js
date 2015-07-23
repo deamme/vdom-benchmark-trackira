@@ -1145,21 +1145,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		// Set the namespace to create an element (of a given tag) in.
 		if (this.namespace == null) {
 
-			switch (tagName) {
-
-				case "svg":
-					this.namespace = "http://www.w3.org/2000/svg";
-					break;
-				case "math":
-					this.namespace = "http://www.w3.org/1998/Math/MathML";
-					break;
-				default:
-					{
-						if (parent) {
-
-							this.namespace = parent.namespace;
-						}
-					}
+			if (tagName === "svg") {
+				this.namespace = "http://www.w3.org/2000/svg";
+			} else if (tagName === "math") {
+				this.namespace = "http://www.w3.org/1998/Math/MathML";
+			} else if (parent) {
+				this.namespace = parent.namespace;
 			}
 		}
 
@@ -1173,10 +1164,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 				renderSelect(this);
 			}
+
 			// Render properties
 			if (props != null) {
 				renderProperties(node, props);
 			}
+
 			// Render attributes
 			if (attrs != null) {
 				renderAttributes(node, attrs);
@@ -1192,10 +1185,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				node.appendChild(children[0].render(this));
 			} else {
 
-				var i = 0,
+				var i = -1,
 				    len = children.length;
-
-				for (; i < len; i++) {
+				while (++i < len) {
 
 					if (children[i]) {
 						node.appendChild(children[i].render(this));
@@ -1259,12 +1251,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var keyMapping = function keyMapping(children, startIndex, endIndex) {
 
 		var child,
-		    keys = {};
+		    keys = {},
+		    i = endIndex;
 
-		for (; startIndex < endIndex; startIndex += 1) {
-			child = children[startIndex].key;
+		for (; i >= startIndex; i--) {
+			child = children[i].key;
 			if (child) {
-				keys[child] = startIndex;
+				keys[child] = i;
 			}
 		}
 
@@ -1277,9 +1270,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * @param {Array} nodes
   */
 	var detach = function detach(nodes) {
-		var i = 0,
-		    len = nodes.length;
-		for (; i < len; i++) {
+
+		var i = -1,
+		    length = nodes.length;
+
+		while (++i < length) {
+
 			nodes[i].detach();
 		}
 	};
@@ -1610,10 +1606,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			if (props !== ref.props) {
 				patchProperties(node, ref.props, props);
 			}
+
 			// Patch / diff attributes
 			if (attrs !== ref.attrs) {
 				patchAttributes(node, ref.attrs, attrs);
 			}
+
 			// Patch / diff children
 			if (children !== ref.children) {
 				patch(ref.node.shadowRoot ? ref.node.shadowRoot : ref.node, children, ref.children);
