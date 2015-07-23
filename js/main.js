@@ -1164,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
         var node = this.node = this.create();
 
         /**
-         * Note! We are checking for 'null' for 'attrs' and 'props' two
-         * times because of performance optimizing
+         * Note! We are checking for 'null' for 'attrs' and 'props'
+         * twice because of performance optimizing
          */
         if (props != null || attrs != null) {
 
@@ -1208,8 +1208,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         /**
-         * Note! Only attac the vnode reference if the DOM element has defined 
-         * events to minimize overhead.
+         * Note! Only attach the reference for the virtual node if the DOM element 
+         * has defined events to minimize overhead.
          */
         if (this.events) {
 
@@ -1399,6 +1399,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 if (ChildrenMap === undefined) {
                                     ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
                                 }
+
 
                                 index = ChildrenMap[toStartNode.key];
 
@@ -1676,9 +1677,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
       * @return {boolean}
       */
     var equalTo = function equalTo(node) {
+        var key = this.key;
+        var tagName = this.tagName;
+        var flag = this.flag;
+        var namespace = this.namespace;
+        var typeExtension = this.typeExtension;
 
-        return !(this.key !== node.key || // "key" highest priority in "patching"
-        this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
+        return key === node.key && tagName === node.tagName && flag === node.flag && namespace === node.namespace && typeExtension === node.typeExtension;
     };
 
     var init = function init(tagName, options, children) {
@@ -2303,7 +2308,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
         Text: Text,
         /**
-
          * Virtual Tree
          */
         Tree: Tree,
