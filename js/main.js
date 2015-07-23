@@ -1310,14 +1310,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
      */
 			} else if (oldChildren.length === 1) {
 
-					while (index < children.length) {
+					for (index = 0, length = children.length; index < length; index += 1) {
 
-						lastChild = children[index++];
+						lastChild = children[index];
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
 							updated = true;
-							break;
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
 					}
