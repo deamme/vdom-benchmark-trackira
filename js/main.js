@@ -1047,12 +1047,24 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+	var keyss = function keyss(obj, k) {
+		k = [];
+		for (k[k.length] in obj);
+		return k;
+	};
+
 	var renderAttributes = function renderAttributes(node, attrs) {
 
 		var key, val;
 
-		for (key in attrs) {
+		var keys = keyss(attrs);
 
+		var i = -1,
+		    length = keys.length;
+
+		while (++i < length) {
+
+			key = keys[i];
 			val = attrs[key];
 
 			if (val != null) {
@@ -1531,7 +1543,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (previousAttr != null) {
 
 			var attrName, previousAttrValue, attrValue;
-			for (attrName in previousAttr) {
+
+			var keys = keyss(previousAttr);
+
+			var i = -1,
+			    length = keys.length;
+
+			while (++i < length) {
+
+				attrName = keys[i];
 
 				if (!attrs || attrs[attrName] == null) {
 
@@ -1551,7 +1571,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 
-			for (attrName in attrs) {
+			keys = keyss(attrs);
+
+			i = -1;
+			length = keys.length;
+
+			while (++i < length) {
+
+				attrName = keys[i];
 
 				attrValue = attrs[attrName];
 
