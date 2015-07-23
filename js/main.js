@@ -1162,19 +1162,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		// create a new virtual element
 		var node = this.node = this.create();
 
-		// Special case - select
-		if (tagName === "select") {
+		if (props != null || attrs != null) {
 
-			renderSelect(this);
-		}
+			// Special case - select
+			if (tagName === "select") {
 
-		// Render properties
-		if (props != null) {
+				renderSelect(this);
+			}
+
+			// Render properties
 			renderProperties(node, props);
-		}
 
-		// Render attributes
-		if (attrs != null) {
+			// Render attributes
 			renderAttributes(node, attrs);
 		}
 
@@ -2333,6 +2332,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 //# sourceMappingURL=./trackira.js.map
 },{}],3:[function(require,module,exports){
 'use strict';
+
 
 var Executor = require('./executor');
 
