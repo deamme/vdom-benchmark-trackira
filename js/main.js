@@ -1323,8 +1323,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 					if (updated) {
 
-						while (index < children.length) {
-							container.appendChild(children[index++].render());
+						for (index = 0, length = children.length; index < length; index += 1) {
+							container.appendChild(children[index].render());
 						}
 					} else {
 						// Detach the node
@@ -1699,6 +1699,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		/**
    * The properties and their values.
    */
+
 		this.props = options.props || null;
 
 		/**
