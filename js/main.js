@@ -1171,10 +1171,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			// Render properties
-			renderProperties(node, props);
+			if (props != null) {
+				renderProperties(node, props);
+			}
 
 			// Render attributes
-			renderAttributes(node, attrs);
+			if (attrs != null) {
+				renderAttributes(node, attrs);
+			}
 		}
 
 		// Render children
@@ -2332,7 +2336,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 //# sourceMappingURL=./trackira.js.map
 },{}],3:[function(require,module,exports){
 'use strict';
-
 
 var Executor = require('./executor');
 
