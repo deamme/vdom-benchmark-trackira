@@ -1270,10 +1270,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Array} nodes
      */
     var detach = function detach(nodes) {
-        var i = 0,
-            len = nodes.length;
-        for (; i < len; i++) {
-            nodes[i].detach();
+        var index = 0,
+            length = nodes.length;
+        for (; index < length; index += 1) {
+
+            nodes[index].detach();
         }
     };
 
@@ -1290,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 length;
 
             /**
-             * 'oldChildren' and 'children' have only one child
+             * Both 'oldChildren' and 'children' are a lonely child
              */
             if (oldChildren.length === 1 && children.length === 1) {
 
@@ -1302,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
 
                 /**
-                 * 'oldChildren' have only one child
+                 * 'oldChildren' is a single child
                  */
             } else if (oldChildren.length === 1) {
 
@@ -1329,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     }
 
                     /**
-                     * 'children' have only one child
+                     * 'children' is a single child
                      */
                 } else if (children.length === 1) {
 
@@ -2022,6 +2023,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             // Create and return a virtual text node
             return new Text(context);
         }
+
 
         var tagName = (config.tagName || "div").toLowerCase();
 
