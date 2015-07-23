@@ -1291,6 +1291,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			    lastChild = children[0],
 			    updated = false,
 			    index = 0,
+			    i = 0,
 			    length;
 
 			/**
@@ -1342,19 +1343,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 							if (firstChild.equalTo(lastChild)) {
 								firstChild.patch(lastChild);
-								updated = true;
+								// updated = true;
+
+								for (i = 0, length = oldChildren.length; index < length; index += 1) {
+									//   while (i < oldChildren.length) {
+									oldChildren[i++].detach();
+								}
 							} else {
 								// Detach the node
 								firstChild.detach();
+								container.appendChild(lastChild.render());
 							}
-						}
-
-						if (updated) {
-							while (index < oldChildren.length) {
-								oldChildren[index++].detach();
-							}
-						} else {
-							container.appendChild(lastChild.render());
 						}
 					} else {
 
@@ -1696,10 +1695,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
    */
 		this.children = children || [];
 
+
 		/**
    * The properties and their values.
    */
-
 		this.props = options.props || null;
 
 		/**
@@ -2508,6 +2507,7 @@ module.exports = Executor;
 
 },{}],5:[function(require,module,exports){
 'use strict';
+
 
 var Benchmark = require('./benchmark');
 var benchmark = new Benchmark();
