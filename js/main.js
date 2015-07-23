@@ -1544,9 +1544,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 							node.style[attrName] = "";
 						}
 						// hooks
-					} else if (hooks__default.unset[attrName]) {
+					} else if (hooks__default.unset[attrName] && previousAttrValue) {
 							hooks__default.unset[attrName](node, previousAttrValue);
 						} else {
+
 							node.removeAttribute(attrName);
 						}
 				}
@@ -1559,8 +1560,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				if (attrName === "class") {
 					node.setAttribute(attrName, processClasses(attrValue));
 				} else if (attrName === "style") {
-					patchStyles(node, attrName, attrValue, previousAttr[attrName]);
-				} else if (previousAttr[attrName] !== attrValue) {
+					if (previousAttr) {
+						patchStyles(node, attrName, attrValue, previousAttr[attrName]);
+					} else {
+						patchStyles(node, attrName, attrValue, undefined);
+					}
+				} else if (!previousAttr || previousAttr[attrName] !== attrValue) {
 					// Support: IE9+
 					// Restore value when type is changed
 					if (attrName === "type") {
@@ -1810,7 +1815,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			return nodes;
 		});
 	};
-
 
 	var unmount = function unmount(uuid) {
 
@@ -2068,7 +2072,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		node.addEventListener(type, callback, useCapture || false);
 	};
-
 
 	var bubbleEvent = function bubbleEvent(root, type) {
 
