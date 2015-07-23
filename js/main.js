@@ -1289,8 +1289,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 			var firstChild = oldChildren[0],
 			    lastChild = children[0],
-			    index = 0,
 			    updated = false,
+			    index = 0,
 			    length;
 
 			/**
@@ -1308,9 +1308,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				/**
      * 'oldChildren' is a single child
      */
-				/**
-      * 'oldChildren' is a single child
-      */
 			} else if (oldChildren.length === 1) {
 
 					for (index = 0, length = children.length; index < length; index += 1) {
@@ -1319,20 +1316,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
-							updated = true;
-							break;
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
-					}
-
-					if (updated) {
-
-						for (index = 0, length = children.length; index < length; index += 1) {
-							container.appendChild(children[index].render());
-						}
-					} else {
-						// Detach the node
-						firstChild.detach();
 					}
 
 					/**
@@ -1354,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						}
 
 						if (updated) {
-							while (index < oldChildren.length) {
+							for (length = oldChildren.length; index < length; index += 1) {
 								oldChildren[index++].detach();
 							}
 						} else {
@@ -2354,6 +2339,7 @@ var Executor = require('./executor');
 
 function Benchmark() {
   this.running = false;
+
   this.impl = null;
   this.tests = null;
   this.reportCallback = null;
@@ -2523,6 +2509,7 @@ function initFromScript(scriptUrl, impl) {
     benchmark.tests = window.benchmarkTests();
     benchmark.ready(true);
   };
+
 
   document.head.appendChild(e);
 }
