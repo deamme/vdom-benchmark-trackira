@@ -1166,19 +1166,21 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		// create a new virtual element
 		var node = this.node = this.create();
 
-		// Special case - select
-		if (tagName === "select") {
+		if (props != null || attrs != null) {
 
-			renderSelect(this);
-		}
+			// Special case - select
+			if (tagName === "select") {
 
-		// Render properties
-		if (props != null) {
-			renderProperties(node, props);
-		}
-		// Render attributes
-		if (attrs != null) {
-			renderAttributes(node, attrs);
+				renderSelect(this);
+			}
+			// Render properties
+			if (props != null) {
+				renderProperties(node, props);
+			}
+			// Render attributes
+			if (attrs != null) {
+				renderAttributes(node, attrs);
+			}
 		}
 
 		// Render children
@@ -1191,7 +1193,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			} else {
 
 				var i = 0,
-
 				    len = children.length;
 
 				for (; i < len; i++) {
@@ -1210,11 +1211,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 
 		// Handle hooks
-		if (hooks && hooks.created) {
 
-			hooks.created(this, node);
+		if (hooks !== undefined) {
+			if (hooks.created) {
+				hooks.created(this, node);
+			}
 		}
-
 		return node;
 	};
 
@@ -1474,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					if (propValue) {
 						node.className = processClasses(propValue);
 					}
-				} else if (previousProps && previousProps[key] !== propValue) {
+				} else if (previousProps[key] !== propValue) {
 					// Support: IE9+
 					// Restore value when type is changed
 					if (key === "type") {
@@ -1599,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			var children = this.children;
 			var events = this.events;
 			var hooks = this.hooks;
-			if (tagName === "select") {
+			if (tagName === "select" && (ref.props || ref.attrs)) {
 
 				renderSelect(ref);
 			}
