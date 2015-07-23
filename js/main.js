@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.6c
+ * @Version: v0.1.7
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -1703,6 +1703,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		/**
    * Callbacks / lifecycle hooks
    */
+
 		this.hooks = options.hooks;
 
 		/**
@@ -1801,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			return nodes;
 		});
 	};
+
 
 	var unmount = function unmount(uuid) {
 
@@ -2326,7 +2328,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		/**
    * Current version of the library
    */
-		version: "0.1.6c"
+		version: "0.1.7"
 	};
 
 	return trackira;
