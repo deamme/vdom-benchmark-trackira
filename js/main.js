@@ -1147,37 +1147,32 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		// Set the namespace to create an element (of a given tag) in.
 		if (this.namespace == null) {
-
+			// Use SVG namespace, if this is an <svg> element
 			if (tagName === "svg") {
 				this.namespace = "http://www.w3.org/2000/svg";
+				// ...or MATH, if the parent is a <math> element
 			} else if (tagName === "math") {
-				this.namespace = "http://www.w3.org/1998/Math/MathML";
-			} else if (parent) {
-				this.namespace = parent.namespace;
-			}
+					this.namespace = "http://www.w3.org/1998/Math/MathML";
+					// ...or inherit from the parent node
+				} else if (parent) {
+						this.namespace = parent.namespace;
+					}
 		}
 
 		// create a new virtual element
 		var node = this.node = this.create();
 
-		if (props != null || attrs != null) {
+		// Special case - select
+		if (tagName === "select") {
 
-			// Special case - select
-			if (tagName === "select") {
-
-				renderSelect(this);
-			}
-
-			// Render properties
-			if (props != null) {
-				renderProperties(node, props);
-			}
-
-			// Render attributes
-			if (attrs != null) {
-				renderAttributes(node, attrs);
-			}
+			renderSelect(this);
 		}
+
+		// Render properties
+		renderProperties(node, props);
+
+		// Render attributes
+		renderAttributes(node, attrs);
 
 		// Render children
 		if (children.length) {
@@ -1703,7 +1698,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		/**
    * Callbacks / lifecycle hooks
    */
-
 		this.hooks = options.hooks;
 
 		/**
@@ -1799,10 +1793,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 
+
 			return nodes;
 		});
 	};
-
 
 	var unmount = function unmount(uuid) {
 
@@ -2341,7 +2335,6 @@ var Executor = require('./executor');
 
 function Benchmark() {
   this.running = false;
-
   this.impl = null;
   this.tests = null;
   this.reportCallback = null;
@@ -2509,9 +2502,9 @@ function initFromScript(scriptUrl, impl) {
 
   e.onload = function() {
     benchmark.tests = window.benchmarkTests();
+
     benchmark.ready(true);
   };
-
 
   document.head.appendChild(e);
 }
