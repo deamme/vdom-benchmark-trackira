@@ -1252,9 +1252,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var keyMapping = function keyMapping(children, startIndex, endIndex) {
 
         var child,
-            keys = {};
-
-        for (; startIndex < endIndex; startIndex += 1) {
+            keys = {},
+            i;
+        for (i = endIndex; i >= startIndex; i--) {
             child = children[startIndex].key;
             if (child) {
                 keys[child] = startIndex;
@@ -2574,6 +2574,7 @@ function init(name, version, impl) {
 
   if (qs['name'] !== void 0) {
     name = qs['name'];
+
   }
 
   if (qs['version'] !== void 0) {
