@@ -1446,9 +1446,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var patchProperties = function patchProperties(node, properties, previousProperties) {
 
-		var key, propValue;
+		if (previousProperties != null) {
 
-		if (previousProperties) {
+			var key, propValue;
 
 			for (key in previousProperties) {
 
@@ -1463,9 +1463,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
-		}
-
-		if (properties) {
 
 			for (key in properties) {
 
@@ -1488,6 +1485,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
+		} else if (properties != null) {
+			renderProperties(node, properties);
 		}
 	};
 
@@ -1527,9 +1526,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var patchAttributes = function patchAttributes(node, attrs, previousAttr) {
 
-		var attrName, previousAttrValue, attrValue;
+		if (previousAttr != null) {
 
-		if (previousAttr) {
+			var attrName, previousAttrValue, attrValue;
 
 			for (attrName in previousAttr) {
 
@@ -1553,9 +1552,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						}
 				}
 			}
-		}
-
-		if (attrs) {
 
 			for (attrName in attrs) {
 
@@ -1583,6 +1579,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
+		} else if (attrs != null) {
+			renderAttributes(node, attrs);
 		}
 	};
 
@@ -2074,7 +2072,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var bubbleEvent = function bubbleEvent(root, type) {
 
 		return function (e) {
-
 
 			e.isPropagationStopped = false;
 			e.delegateTarget = e.target;
