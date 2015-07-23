@@ -870,12 +870,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				html += children[0].toHTML();
 			} else {
 
-				var index = 0,
+				var index = -1,
 				    len = children.length;
+				while (++index < len) {
 
-				for (; index < len; index++) {
-
-					html += children[index].toHTML();
+					if (children[index]) {
+						html += children[index].toHTML();
+					}
 				}
 			}
 
@@ -1047,24 +1048,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-	var keyss = function keyss(obj, k) {
-		k = [];
-		for (k[k.length] in obj);
-		return k;
-	};
-
 	var renderAttributes = function renderAttributes(node, attrs) {
 
 		var key, val;
 
-		var keys = keyss(attrs);
+		for (key in attrs) {
 
-		var i = -1,
-		    length = keys.length;
-
-		while (++i < length) {
-
-			key = keys[i];
 			val = attrs[key];
 
 			if (val != null) {
@@ -1102,9 +1091,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 			// process virtual child nodes
 		} else if (vnode.children.length) {
-				var index = 0,
+
+				var index = -1,
 				    len = vnode.children.length;
-				for (; index < len; index++) {
+				while (++index < len) {
 					processOption(vnode.children[index], values);
 				}
 			}
@@ -1382,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						while (fromStartIndex <= fromEndIndex && toStartIndex <= toEndIndex) {
 
+
 							if (fromStartNode === undefined) {
 								fromStartIndex++;
 							} else if (fromEndNode === undefined) {
@@ -1543,15 +1534,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (previousAttr != null) {
 
 			var attrName, previousAttrValue, attrValue;
-
-			var keys = keyss(previousAttr);
-
-			var i = -1,
-			    length = keys.length;
-
-			while (++i < length) {
-
-				attrName = keys[i];
+			for (attrName in previousAttr) {
 
 				if (!attrs || attrs[attrName] == null) {
 
@@ -1571,14 +1554,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 
-			keys = keyss(attrs);
-
-			i = -1;
-			length = keys.length;
-
-			while (++i < length) {
-
-				attrName = keys[i];
+			for (attrName in attrs) {
 
 				attrValue = attrs[attrName];
 
