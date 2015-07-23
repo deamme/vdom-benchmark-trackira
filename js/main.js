@@ -1585,10 +1585,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_patch = function prototype_patch(ref) {
 
-        if (!this.equalTo(ref)) {
-
-            return ref.render(this.parent);
-        } else {
+        if (this.equalTo(ref)) {
             var node = this.node;
 
             // Special case - select
@@ -1598,20 +1595,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
             var children = this.children;
             var events = this.events;
             var hooks = this.hooks;
-            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
+            if (tagName === "select" && (ref.props || ref.attrs)) {
 
                 renderSelect(ref);
             }
 
             // Patch / diff properties
-            if (props !== ref.props) {
-                patchProperties(node, ref.props, props);
-            }
+            patchProperties(node, ref.props, props);
 
             // Patch / diff attributes
-            if (attrs !== ref.attrs) {
-                patchAttributes(node, ref.attrs, attrs);
-            }
+            patchAttributes(node, ref.attrs, attrs);
 
             // Patch / diff children
             if (children !== ref.children) {
@@ -1634,10 +1627,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
             }
 
-            ref.node = node;
-
-            return node;
+            return ref.node = this.node;
         }
+        return ref.render(this.parent);
     };
 
     /**
@@ -1954,6 +1946,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
+
         return this.apply(selector, factory, data, append);
     };
 
@@ -2229,6 +2222,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         if (option.selected &&
                         // Don't return options that are disabled or in a disabled optgroup
                         option.getAttribute("disabled") === null && (!option.parentNode.disabled || getNodeName(option.parentNode) !== "optgroup")) {
+
 
                             result.push(option.value || option.text);
                         }
