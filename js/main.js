@@ -1289,9 +1289,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 			var firstChild = oldChildren[0],
 			    lastChild = children[0],
-			    updated = false,
 			    index = 0,
-			    i = 0,
 			    length;
 
 			/**
@@ -1317,24 +1315,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
-							updated = true;
+							container.appendChild(children[index].render());
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
 					}
 
-					if (updated) {
-
-						for (index = 0, length = children.length; index < length; index += 1) {
-							container.appendChild(children[index].render());
-						}
-					} else {
-						// Detach the node
-						firstChild.detach();
-					}
-
 					/**
-      * 'children' is a single child
-      */
+       * 'children' is a single child
+       */
 				} else if (children.length === 1) {
 
 						for (index = 0, length = oldChildren.length; index < length; index += 1) {
@@ -1343,12 +1331,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 							if (firstChild.equalTo(lastChild)) {
 								firstChild.patch(lastChild);
-								// updated = true;
-
-								for (i = 0, length = oldChildren.length; index < length; index += 1) {
-									//   while (i < oldChildren.length) {
-									oldChildren[i++].detach();
-								}
+								oldChildren[index].detach();
 							} else {
 								// Detach the node
 								firstChild.detach();
@@ -1442,6 +1425,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		return children;
 	};
+
 
 	var patchProperties = function patchProperties(node, properties, previousProps) {
 
@@ -1694,7 +1678,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * List of children nodes. 
    */
 		this.children = children || [];
-
 
 		/**
    * The properties and their values.
@@ -2507,7 +2490,6 @@ module.exports = Executor;
 
 },{}],5:[function(require,module,exports){
 'use strict';
-
 
 var Benchmark = require('./benchmark');
 var benchmark = new Benchmark();
