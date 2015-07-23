@@ -1169,10 +1169,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 
 		// Render properties
-		renderProperties(node, props);
+		if (props != null) {
+			renderProperties(node, props);
+		}
 
 		// Render attributes
-		renderAttributes(node, attrs);
+		if (attrs != null) {
+			renderAttributes(node, attrs);
+		}
 
 		// Render children
 		if (children.length) {
@@ -1792,7 +1796,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
-
 
 			return nodes;
 		});
@@ -2502,7 +2505,6 @@ function initFromScript(scriptUrl, impl) {
 
   e.onload = function() {
     benchmark.tests = window.benchmarkTests();
-
     benchmark.ready(true);
   };
 
