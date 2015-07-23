@@ -1444,13 +1444,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		return children;
 	};
 
-	var patchProperties = function patchProperties(node, properties, previousProperties) {
+	var patchProperties = function patchProperties(node, properties, previousProps) {
 
-		if (previousProperties != null) {
+		if (previousProps != null) {
 
 			var key, propValue;
 
-			for (key in previousProperties) {
+			for (key in previousProps) {
 
 				if (!properties || properties[key] == null) {
 
@@ -1473,7 +1473,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					if (propValue) {
 						node.className = processClasses(propValue);
 					}
-				} else if (previousProperties && previousProperties[key] !== propValue) {
+				} else if (previousProps && previousProps[key] !== propValue) {
 					// Support: IE9+
 					// Restore value when type is changed
 					if (key === "type") {
@@ -1485,9 +1485,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
+			/**
+   * There is no 'previousProps', so we just insert all properties
+   */
 		} else if (properties != null) {
-			renderProperties(node, properties);
-		}
+				renderProperties(node, properties);
+			}
 	};
 
 	/**
@@ -1529,7 +1532,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (previousAttr != null) {
 
 			var attrName, previousAttrValue, attrValue;
-
 			for (attrName in previousAttr) {
 
 				if (!attrs || attrs[attrName] == null) {
@@ -1543,11 +1545,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						}
 						// hooks
 					} else if (hooks__default.unset[attrName]) {
-							if (previousAttrValue) {
-								hooks__default.unset[attrName](node, previousAttrValue);
-							}
+							hooks__default.unset[attrName](node, previousAttrValue);
 						} else {
-
 							node.removeAttribute(attrName);
 						}
 				}
@@ -1560,12 +1559,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				if (attrName === "class") {
 					node.setAttribute(attrName, processClasses(attrValue));
 				} else if (attrName === "style") {
-					if (previousAttr) {
-						patchStyles(node, attrName, attrValue, previousAttr[attrName]);
-					} else {
-						patchStyles(node, attrName, attrValue, undefined);
-					}
-				} else if (!previousAttr || previousAttr[attrName] !== attrValue) {
+					patchStyles(node, attrName, attrValue, previousAttr[attrName]);
+				} else if (previousAttr[attrName] !== attrValue) {
 					// Support: IE9+
 					// Restore value when type is changed
 					if (attrName === "type") {
@@ -1579,9 +1574,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					}
 				}
 			}
+
+			/**
+    * There is no 'previousAttr', so we just insert all attributes
+    */
 		} else if (attrs != null) {
-			renderAttributes(node, attrs);
-		}
+				renderAttributes(node, attrs);
+			}
 	};
 
 	var prototype_patch = function prototype_patch(ref) {
@@ -1811,6 +1810,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			return nodes;
 		});
 	};
+
 
 	var unmount = function unmount(uuid) {
 
@@ -2068,6 +2068,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		node.addEventListener(type, callback, useCapture || false);
 	};
+
 
 	var bubbleEvent = function bubbleEvent(root, type) {
 
