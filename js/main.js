@@ -1286,7 +1286,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             var firstChild = oldChildren[0],
                 lastChild = children[0],
                 updated = false,
-                index = 0;
+                index = 0,
+                length;
 
             /**
              * 'oldChildren' and 'children' have only one child
@@ -1305,9 +1306,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                  */
             } else if (oldChildren.length === 1) {
 
-                    while (index < children.length) {
+                    for (index = 0, length = children.length; index < length; index += 1) {
 
-                        lastChild = children[index++];
+                        lastChild = children[index];
 
                         if (firstChild.equalTo(lastChild)) {
                             firstChild.patch(lastChild);
@@ -1332,17 +1333,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
                      */
                 } else if (children.length === 1) {
 
-                        while (index < oldChildren.length) {
+                        for (index = 0, length = oldChildren.length; index < length; index += 1) {
 
-                            firstChild = oldChildren[index++];
+                            firstChild = oldChildren[index];
 
                             if (firstChild.equalTo(lastChild)) {
                                 firstChild.patch(lastChild);
                                 updated = true;
-                                break;
+                            } else {
+                                // Detach the node
+                                firstChild.detach();
                             }
-                            // Detach the node
-                            firstChild.detach();
                         }
 
                         if (updated) {
@@ -2088,6 +2089,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
         };
     };
+
 
     /**
      * Bind an bubbled event on a DOM node.
