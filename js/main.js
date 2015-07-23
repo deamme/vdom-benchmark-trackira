@@ -1300,6 +1300,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             var firstChild = oldChildren[0],
                 lastChild = children[0],
                 updated = false,
+                verified = true,
                 index = 0,
                 length;
 
@@ -1309,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             if (oldChildren.length === 1 && children.length === 1) {
 
                 if (firstChild.equalTo(lastChild)) {
-                    firstChild.patch(lastChild);
+                    firstChild.patch(lastChild, verified);
                 } else {
                     firstChild.detach();
                     container.appendChild(lastChild.render());
@@ -1325,7 +1326,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         lastChild = children[index];
 
                         if (firstChild.equalTo(lastChild)) {
-                            firstChild.patch(lastChild);
+                            firstChild.patch(lastChild, verified);
                         }
                         container.insertBefore(lastChild.render(), firstChild.node);
                     }
@@ -1340,7 +1341,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             firstChild = oldChildren[index];
 
                             if (firstChild.equalTo(lastChild)) {
-                                firstChild.patch(lastChild);
+                                firstChild.patch(lastChild, verified);
                                 updated = true;
                             } else {
                                 // Detach the node
@@ -1384,13 +1385,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 fromEndIndex--;
                                 toEndIndex--;
                             } else if (fromStartNode.equalTo(toEndNode)) {
-                                fromStartNode.patch(toEndNode);
+                                fromStartNode.patch(toEndNode, verified);
                                 container.insertBefore(fromStartNode.node, fromEndNode.node.nextSibling);
                                 fromStartIndex++;
                                 toEndIndex--;
                             } else if (fromEndNode.equalTo(toStartNode)) {
 
-                                fromEndNode.patch(toStartNode);
+                                fromEndNode.patch(toStartNode, verified);
                                 container.insertBefore(fromEndNode.node, fromStartNode.node);
                                 fromEndIndex--;
                                 toStartIndex++;
@@ -1399,7 +1400,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 if (ChildrenMap === undefined) {
                                     ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
                                 }
-
 
                                 index = ChildrenMap[toStartNode.key];
 
@@ -1509,6 +1509,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 for (key in prevStyle) {
                     node.style[key] = "";
+
                 }
 
                 for (key in value) {
@@ -1583,22 +1584,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
     };
 
-    var prototype_patch = function prototype_patch(ref) {
+    var prototype_patch = function prototype_patch(ref, verified) {
 
-        if (this.equalTo(ref)) {
-
-            /** @type {HTMLElement} */
-            var node = ref.node = this.node;
-
-            var tagName = this.tagName;
+        if (verified !== undefined || this.equalTo(ref)) {
+            var node = this.node;
 
             // Special case - select
+            var tagName = this.tagName;
             var props = this.props;
             var attrs = this.attrs;
             var children = this.children;
             var events = this.events;
             var hooks = this.hooks;
-            if (tagName === "select" && (ref.props || ref.attrs)) {
+            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
 
                 renderSelect(ref);
             }
@@ -1615,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             // Patch / diff children
             if (children !== ref.children) {
-                patch(ref.node.shadowRoot ? ref.node.shadowRoot : ref.node, children, ref.children);
+                patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
             }
 
             // Handle events
@@ -1633,6 +1631,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     hooks.updated(this, node);
                 }
             }
+
+            ref.node = node;
 
             return node;
         }
