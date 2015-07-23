@@ -1290,6 +1290,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			var firstChild = oldChildren[0],
 			    lastChild = children[0],
 			    index = 0,
+			    updated = false,
 			    length;
 
 			/**
@@ -1307,6 +1308,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				/**
      * 'oldChildren' is a single child
      */
+				/**
+      * 'oldChildren' is a single child
+      */
 			} else if (oldChildren.length === 1) {
 
 					for (index = 0, length = children.length; index < length; index += 1) {
@@ -1315,13 +1319,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
+							updated = true;
+							break;
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
 					}
 
+					if (updated) {
+
+						for (index = 0, length = children.length; index < length; index += 1) {
+							container.appendChild(children[index].render());
+						}
+					} else {
+						// Detach the node
+						firstChild.detach();
+					}
+
 					/**
-       * 'children' is a single child
-       */
+      * 'children' is a single child
+      */
 				} else if (children.length === 1) {
 
 						for (index = 0, length = oldChildren.length; index < length; index += 1) {
@@ -1330,12 +1346,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 							if (firstChild.equalTo(lastChild)) {
 								firstChild.patch(lastChild);
-								oldChildren[index].detach();
+								updated = true;
 							} else {
 								// Detach the node
 								firstChild.detach();
-								container.appendChild(lastChild.render());
 							}
+						}
+
+						if (updated) {
+							while (index < oldChildren.length) {
+								oldChildren[index++].detach();
+							}
+						} else {
+							container.appendChild(lastChild.render());
 						}
 					} else {
 
@@ -1702,7 +1725,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * created or patched. 
    */
 		this.node = null;
-
 
 		/**
    * Reference to the parent node - a DOM element used for W3C DOM API calls
