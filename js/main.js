@@ -1315,7 +1315,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 						if (firstChild.equalTo(lastChild)) {
 							firstChild.patch(lastChild);
-							container.appendChild(children[index].render());
 						}
 						container.insertBefore(lastChild.render(), firstChild.node);
 					}
@@ -1425,7 +1424,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		return children;
 	};
-
 
 	var patchProperties = function patchProperties(node, properties, previousProps) {
 
@@ -1704,6 +1702,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * created or patched. 
    */
 		this.node = null;
+
 
 		/**
    * Reference to the parent node - a DOM element used for W3C DOM API calls
