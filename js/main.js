@@ -1677,13 +1677,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
       * @return {boolean}
       */
     var equalTo = function equalTo(node) {
-        var key = this.key;
-        var tagName = this.tagName;
-        var flag = this.flag;
-        var namespace = this.namespace;
-        var typeExtension = this.typeExtension;
 
-        return key === node.key && tagName === node.tagName && flag === node.flag && namespace === node.namespace && typeExtension === node.typeExtension;
+        return !(this.key !== node.key || // "key" highest priority in "patching"
+        this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
     };
 
     var init = function init(tagName, options, children) {
