@@ -1585,20 +1585,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_patch = function prototype_patch(ref) {
 
-        if (this.equalTo(ref)) {
+        if (!this.equalTo(ref)) {
 
-            /** @type {HTMLElement} */
-            var node = ref.node = this.node;
-
-            var tagName = this.tagName;
+            return ref.render(this.parent);
+        } else {
+            var node = this.node;
 
             // Special case - select
+            var tagName = this.tagName;
             var props = this.props;
             var attrs = this.attrs;
             var children = this.children;
             var events = this.events;
             var hooks = this.hooks;
-            if (tagName === "select" && (ref.props || ref.attrs)) {
+            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
 
                 renderSelect(ref);
             }
@@ -1615,7 +1615,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             // Patch / diff children
             if (children !== ref.children) {
-                patch(ref.node.shadowRoot ? ref.node.shadowRoot : ref.node, children, ref.children);
+                patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
             }
 
             // Handle events
@@ -1634,9 +1634,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
             }
 
+            ref.node = node;
+
             return node;
         }
-        return ref.render(this.parent);
     };
 
     /**
