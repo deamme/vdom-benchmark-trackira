@@ -1487,8 +1487,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 			/**
-   * There is no 'previousProps', so we just insert all properties
-   */
+    * There is no 'previousProps', so we just insert all properties
+    */
 		} else if (properties != null) {
 				renderProperties(node, properties);
 			}
