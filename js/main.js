@@ -1265,12 +1265,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var keyMapping = function keyMapping(children, startIndex, endIndex) {
 
         var child,
-            keys = {};
+            keys = {},
+            i = endIndex;
 
-        for (; startIndex < endIndex; startIndex += 1) {
-            child = children[startIndex].key;
+        for (; i >= startIndex; i--) {
+
+            child = children[i].key;
             if (child) {
-                keys[child] = startIndex;
+                keys[child] = i;
             }
         }
 
@@ -1400,7 +1402,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                     ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
                                 }
 
-
                                 index = ChildrenMap[toStartNode.key];
 
                                 if (index) {
@@ -1439,6 +1440,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 }
                             }
                         }
+
                     }
         }
 
