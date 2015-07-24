@@ -1410,6 +1410,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                     node.patch(toStartNode);
                                     container.insertBefore(node.node, fromStartNode.node);
                                 } else {
+                                    // create a new element
 
                                     container.insertBefore(toStartNode.render(), fromStartNode.node);
                                 }
@@ -1946,7 +1947,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-
         return this.apply(selector, factory, data, append);
     };
 
@@ -2085,6 +2085,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 e.delegateTarget = e.delegateTarget.parentNode;
             }
         };
+
     };
 
     /**
@@ -2222,7 +2223,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         if (option.selected &&
                         // Don't return options that are disabled or in a disabled optgroup
                         option.getAttribute("disabled") === null && (!option.parentNode.disabled || getNodeName(option.parentNode) !== "optgroup")) {
-
 
                             result.push(option.value || option.text);
                         }
