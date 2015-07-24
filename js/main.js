@@ -1247,15 +1247,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             if (parentElement) {
 
-                if (hooks == null) {
-
-                    parentElement.removeChild(node);
-                } else if (hooks.destroy) {
+                if (hooks && hooks.destroy) {
 
                     hooks.destroy(node, function () {
 
                         parentElement.removeChild(node);
                     });
+                } else {
+                    parentElement.removeChild(node);
                 }
             }
 
