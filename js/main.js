@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8
+ * @Version: v0.1.7
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -561,7 +561,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 markup += key + " ";
             }
         }
-
         return markup.trim();
     };
 
@@ -1801,6 +1800,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         toHTML: toHTML,
         render: render,
         patch: prototype_patch,
+
         destroy: destroy,
         detach: prototype_detach,
         equalTo: equalTo,
@@ -1820,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_mount = function prototype_mount(selector, factory, data) {
 
-        return this.glue(selector, factory, data, function (root, nodes) {
+        return this.apply(selector, factory, data, function (root, nodes) {
 
             // Normalize the nodes
             nodes = normalize(nodes);
@@ -1953,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, factory, container, children) {
+    var apply = function apply(selector, factory, container, children) {
         if (container === undefined) container = {};
 
         // Find the selector where we are going to mount the virtual tree
@@ -1989,7 +1989,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-        return this.glue(selector, factory, data, append);
+        return this.apply(selector, factory, data, append);
     };
 
     // Generate a unique identifier
@@ -2035,63 +2035,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var Tree = function Tree() {
-        /**
-         * Initialize the tree
-         */
+
         this.init();
     };
 
     Tree.prototype = {
-
-        /**
-         * Initialize
-         */
         init: prototype_init,
-
-        /**
-         * "Glue" / attach virtual trees or server rendered HTML markup 
-         * to a given selector
-         */
-        glue: glue,
-
-        /**
-         * Append server rendered HTML markup
-         */
+        apply: apply,
         append: Tree_prototype_append,
-
-        /**
-         * Mount a virtual tree
-         */
         mount: prototype_mount,
-
-        /**
-         * Unmount a virtual tree
-         */
         unmount: unmount,
-
-        /**
-         * Update a virtual tree
-         */
         update: update,
-
-        /**
-         * Return overview over mounted tree, or all mounted trees
-         */
         mounted: mounted,
-
-        /**
-         * Generate a unique identifier for mounting virtual trees
-         */
         guid: prototype_guid,
-
-        /**
-         * Returns all child nodes beloning to the mounted tree
-         */
         children: prototype_children,
-
-        /**
-         * Return a real DOM node where the virtual tree are mounted
-         */
         mountPoint: mountPoint
     };
 
@@ -2149,19 +2106,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
         node.addEventListener(type, callback, useCapture || false);
     };
 
-    /**
-     * Eventhandler
-     *
-     * @param {Object} root
-     * @param {String} evt
-     */
-    var eventHandler = function eventHandler(root, evt) {
+    var bubbleEvent = function bubbleEvent(root, type) {
 
         return function (e) {
 
             e.isPropagationStopped = false;
             e.delegateTarget = e.target;
-
             e.stopPropagation = function () {
 
                 this.isPropagationStopped = true;
@@ -2169,8 +2119,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             while (e.delegateTarget && e.delegateTarget !== root.eventHandler) {
 
-                root.eventHandler(evt, e);
-
+                root.eventHandler(type, e);
                 if (e.isPropagationStopped) {
 
                     break;
@@ -2180,19 +2129,27 @@ document.addEventListener('DOMContentLoaded', function(e) {
         };
     };
 
-    var bind = function bind(evt, useCapture) {
+    /**
+     * Bind an bubbled event on a DOM node.
+     *
+     * NOTE: The listener will be invoked with a normalized event object.
+     *
+     * @param {String} type
+     * @param {Boolean} useCapture
+     */
+    var bind = function bind(type, useCapture) {
 
-        var handler = eventHandler(this, evt);
+        var evt = bubbleEvent(this, type);
 
-        // remove the event 'evt' if the event are bound already
-        if (this.eventContainer[evt]) {
-            this.unbind(evt);
+        // remove the event type if the event are bound already
+        if (this.eventContainer[type]) {
+            this.unbind(type);
         }
 
-        this.eventContainer[evt] = handler;
-        addEventListener(this.context, evt, this.eventContainer[evt], useCapture || false);
+        this.eventContainer[type] = evt;
+        addEventListener(this.context, type, this.eventContainer[type], useCapture || false);
 
-        return handler;
+        return evt;
     };
 
     /**
@@ -2416,7 +2373,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8a"
+        version: "0.1.7"
     };
 
     return trackira;
