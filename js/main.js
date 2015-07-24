@@ -323,17 +323,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         return value instanceof Array;
     };
 
-    var normalize = function normalize(nodes) {
+    var normalizeChildren = function normalizeChildren(children) {
 
-        if (typeof nodes === "function") {
-            nodes = nodes(nodes);
+        if (typeof children === "function") {
+            children = [children(children)];
+        } else if (!isArray(children)) {
+            children = [children];
         }
 
-        if (!isArray(nodes)) {
-            nodes = [nodes];
-        }
-
-        return nodes;
+        return children;
     };
 
     var append = function append(node, children, parent) {
@@ -346,8 +344,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
 
         if (node) {
-            // normalize the children
-            children = normalize(children, parent);
+            // normalize child nodes
+            children = normalizeChildren(children, parent);
 
             var i = 0,
                 j = 0,
@@ -404,7 +402,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
     var processClasses = function processClasses(className) {
 
-        if (typeof className === "string" || typeof className === "number") {
+        // quick 'bail out' if 'className' is a string, number or a date value
+
+        if (typeof className === "string" || typeof className === "number" || className instanceof Date) {
 
             return className;
         }
@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      */
     var createMarkupForClass = function createMarkupForClass(value) {
 
-        if (typeof value === "string") {
+        if (typeof value === "string" || typeof value === "number" || value instanceof Date) {
 
             return value;
         }
@@ -559,6 +559,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 markup += key + " ";
             }
         }
+
         return markup.trim();
     };
 
@@ -586,6 +587,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         serialized += styleName + ":";
                         serialized += typeof styleValue === "number" ? styleValue + "px" : styleValue;
                         serialized += ";";
+
                     }
                 }
             }
@@ -656,6 +658,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         charset: true,
         challenge: true,
         checked: 1,
+
         classID: true,
         className: true,
         cols: true,
@@ -1819,10 +1822,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         return this.apply(selector, factory, data, function (root, nodes) {
 
-            // Normalize the nodes
-            nodes = normalize(nodes);
+            /**
+            * Normalize the child nodes
+            */
+            nodes = normalizeChildren(nodes);
 
-            // Render children
+            /**
+            * Render child nodes and attach to the root node
+            */
             if (nodes.length) {
 
                 if (nodes.length === 1 && nodes[0]) {
@@ -1875,7 +1882,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var updateChildren = function updateChildren(root, prevChildren, newChildren) {
         if (prevChildren !== newChildren) {
-            return patch(root, prevChildren, normalize(newChildren));
+            // Normalize the child nodes, and patch/diff the children
+            return patch(root, prevChildren, normalizeChildren(newChildren));
         }
     };
 
@@ -2103,12 +2111,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
         node.addEventListener(type, callback, useCapture || false);
     };
 
-    var bubbleEvent = function bubbleEvent(root, type) {
+    /**
+     * Eventhandler
+     *
+     * @param {Object} root
+     * @param {String} evt
+     */
+    var eventHandler = function eventHandler(root, evt) {
 
         return function (e) {
 
             e.isPropagationStopped = false;
             e.delegateTarget = e.target;
+
             e.stopPropagation = function () {
 
                 this.isPropagationStopped = true;
@@ -2116,7 +2131,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             while (e.delegateTarget && e.delegateTarget !== root.eventHandler) {
 
-                root.eventHandler(type, e);
+                root.eventHandler(evt, e);
+
                 if (e.isPropagationStopped) {
 
                     break;
@@ -2126,27 +2142,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
         };
     };
 
-    /**
-     * Bind an bubbled event on a DOM node.
-     *
-     * NOTE: The listener will be invoked with a normalized event object.
-     *
-     * @param {String} type
-     * @param {Boolean} useCapture
-     */
-    var bind = function bind(type, useCapture) {
+    var bind = function bind(evt, useCapture) {
 
-        var evt = bubbleEvent(this, type);
+        var handler = eventHandler(this, evt);
 
-        // remove the event type if the event are bound already
-        if (this.eventContainer[type]) {
-            this.unbind(type);
+        // remove the event 'evt' if the event are bound already
+        if (this.eventContainer[evt]) {
+            this.unbind(evt);
         }
 
-        this.eventContainer[type] = evt;
-        addEventListener(this.context, type, this.eventContainer[type], useCapture || false);
+        this.eventContainer[evt] = handler;
+        addEventListener(this.context, evt, this.eventContainer[evt], useCapture || false);
 
-        return evt;
+        return handler;
     };
 
     /**
