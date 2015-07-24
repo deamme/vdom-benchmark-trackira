@@ -1243,18 +1243,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         if (node) {
 
-            var parentElement = node.parentElement;
+            var parentElement = node.parentNode;
 
             if (parentElement) {
 
-                if (hooks && hooks.destroy) {
+                if (hooks == null) {
+
+                    parentElement.removeChild(node);
+                } else if (hooks.destroy) {
 
                     hooks.destroy(node, function () {
 
                         parentElement.removeChild(node);
                     });
-                } else {
-                    parentElement.removeChild(node);
                 }
             }
 
