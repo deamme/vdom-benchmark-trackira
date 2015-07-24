@@ -1374,49 +1374,62 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 fromStartIndex++;
                             } else if (fromEndNode === undefined) {
                                 fromEndIndex--;
+                                // Update nodes with the same key at the beginning.	
                             } else if (fromStartNode.equalTo(toStartNode)) {
-                                fromStartNode.patch(toStartNode);
-                                fromStartIndex++;
-                                toStartIndex++;
-                            } else if (fromEndNode.equalTo(toEndNode)) {
+                                    fromStartNode.patch(toStartNode);
+                                    fromStartIndex++;
+                                    toStartIndex++;
+                                    // Update nodes with the same key at the end.	
+                                } else if (fromEndNode.equalTo(toEndNode)) {
+                                        fromEndNode.patch(toEndNode);
+                                        fromEndIndex--;
+                                        toEndIndex--;
+                                        // Move nodes from left to right.
+                                    } else if (fromStartNode.equalTo(toEndNode)) {
+                                            fromStartNode.patch(toEndNode);
 
-                                fromEndNode.patch(toEndNode);
-                                fromEndIndex--;
-                                toEndIndex--;
-                            } else if (fromStartNode.equalTo(toEndNode)) {
-                                fromStartNode.patch(toEndNode);
-                                container.insertBefore(fromStartNode.node, fromEndNode.node.nextSibling);
-                                fromStartIndex++;
-                                toEndIndex--;
-                            } else if (fromEndNode.equalTo(toStartNode)) {
+                                            var nextPos = toEndIndex + 1;
 
-                                fromEndNode.patch(toStartNode);
-                                container.insertBefore(fromEndNode.node, fromStartNode.node);
-                                fromEndIndex--;
-                                toStartIndex++;
-                            } else {
+                                            var next = nextPos < children.length ? children[nextPos].node : null;
+                                            // move the child...
+                                            if (next) {
+                                                container.insertBefore(fromStartNode.node, next);
+                                            } else {
+                                                container.appendChild(fromStartNode.node);
+                                            }
+                                            fromStartIndex++;
 
-                                if (ChildrenMap === undefined) {
-                                    ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
-                                }
+                                            toEndIndex--;
 
+                                            // Move nodes from right to left.	
+                                        } else if (fromEndNode.equalTo(toStartNode)) {
 
-                                index = ChildrenMap[toStartNode.key];
+                                                fromEndNode.patch(toStartNode);
+                                                container.insertBefore(fromEndNode.node, fromStartNode.node);
+                                                fromEndIndex--;
+                                                toStartIndex++;
+                                            } else {
 
-                                if (index) {
+                                                if (ChildrenMap === undefined) {
+                                                    ChildrenMap = keyMapping(oldChildren, fromStartIndex, fromEndIndex);
+                                                }
 
-                                    node = oldChildren[index];
-                                    oldChildren[index] = undefined;
-                                    node.patch(toStartNode);
-                                    container.insertBefore(node.node, fromStartNode.node);
-                                } else {
-                                    // create a new element
+                                                index = ChildrenMap[toStartNode.key];
 
-                                    container.insertBefore(toStartNode.render(), fromStartNode.node);
-                                }
+                                                if (index) {
 
-                                toStartIndex++;
-                            }
+                                                    node = oldChildren[index];
+                                                    oldChildren[index] = undefined;
+                                                    node.patch(toStartNode);
+                                                    container.insertBefore(node.node, fromStartNode.node);
+                                                } else {
+                                                    // create a new element
+
+                                                    container.insertBefore(toStartNode.render(), fromStartNode.node);
+                                                }
+
+                                                toStartIndex++;
+                                            }
                             fromStartNode = oldChildren[fromStartIndex];
                             fromEndNode = oldChildren[fromEndIndex];
                             toEndNode = children[toEndIndex];
