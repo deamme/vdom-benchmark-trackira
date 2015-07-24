@@ -1208,8 +1208,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 var index = 0,
                     length = children.length;
-                for (; index < length; index += 1) {
 
+                for (; index < length; index += 1) {
+                    // ignore incompatible children
                     if (children[index]) {
 
                         node.appendChild(children[index].render(this));
@@ -1820,16 +1821,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_mount = function prototype_mount(selector, factory, data) {
 
-        return this.apply(selector, factory, data, function (root, nodes) {
+        return this.glue(selector, factory, data, function (root, nodes) {
 
             /**
-            * Normalize the child nodes
-            */
+             * Normalize the child nodes
+             */
             nodes = normalizeChildren(nodes);
 
             /**
-            * Render child nodes and attach to the root node
-            */
+             * Render child nodes and attach to the root node
+             */
             if (nodes.length) {
 
                 if (nodes.length === 1 && nodes[0]) {
@@ -1837,13 +1838,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     root.appendChild(nodes[0].render());
                 } else {
 
-                    var i = 0,
-                        len = nodes.length;
-                    for (; i < len; i++) {
-                        // ignore incompatible children
-                        if (nodes[i]) {
+                    var index = 0,
+                        length = nodes.length;
+                    for (; index < length; index += 1) {
 
-                            root.appendChild(nodes[i].render());
+                        // ignore incompatible children
+                        if (nodes[index]) {
+
+                            root.appendChild(nodes[index].render());
                         }
                     }
                 }
@@ -1958,7 +1960,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var apply = function apply(selector, factory, container, children) {
+    var glue = function glue(selector, factory, container, children) {
         if (container === undefined) container = {};
 
         // Find the selector where we are going to mount the virtual tree
@@ -1994,7 +1996,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-        return this.apply(selector, factory, data, append);
+        return this.glue(selector, factory, data, append);
     };
 
     // Generate a unique identifier
@@ -2040,20 +2042,63 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var Tree = function Tree() {
-
+        /**
+         * Initialize the tree
+         */
         this.init();
     };
 
     Tree.prototype = {
+
+        /**
+         * Initialize
+         */
         init: prototype_init,
-        apply: apply,
+
+        /**
+         * "Glue" / attach virtual trees or server rendered HTML markup 
+         * to a given selector
+         */
+        glue: glue,
+
+        /**
+         * Append server rendered HTML markup
+         */
         append: Tree_prototype_append,
+
+        /**
+         * Mount a virtual tree
+         */
         mount: prototype_mount,
+
+        /**
+         * Unmount a virtual tree
+         */
         unmount: unmount,
+
+        /**
+         * Update a virtual tree
+         */
         update: update,
+
+        /**
+         * Return overview over mounted tree, or all mounted trees
+         */
         mounted: mounted,
+
+        /**
+         * Generate a unique identifier for mounting virtual trees
+         */
         guid: prototype_guid,
+
+        /**
+         * Returns all child nodes beloning to the mounted tree
+         */
         children: prototype_children,
+
+        /**
+         * Return a real DOM node where the virtual tree are mounted
+         */
         mountPoint: mountPoint
     };
 
