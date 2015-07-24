@@ -1148,16 +1148,21 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         // Set the namespace to create an element (of a given tag) in.
         if (this.namespace == null) {
-            // Use SVG namespace, if this is an <svg> element
-            if (tagName === "svg") {
-                this.namespace = "http://www.w3.org/2000/svg";
+            switch (tagName) {
+                // Use SVG namespace, if this is an <svg> element
+                case "svg":
+                    this.namespace = "http://www.w3.org/2000/svg";
+                    break;
                 // ...or MATH, if the parent is a <math> element
-            } else if (tagName === "math") {
+                case "math":
                     this.namespace = "http://www.w3.org/1998/Math/MathML";
+                    break;
+                default:
                     // ...or inherit from the parent node
-                } else if (parent) {
+                    if (parent) {
                         this.namespace = parent.namespace;
                     }
+            }
         }
 
         // create a new virtual element
@@ -1308,6 +1313,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
              */
             if (oldChildren.length === 1 && children.length === 1) {
 
+
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
@@ -1433,7 +1439,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             for (; startIndex <= endIndex; startIndex++) {
                                 if (children[endIndex + 1] === undefined) {
                                     container.appendChild(children[startIndex].render());
-
                                 } else {
                                     container.insertBefore(children[startIndex].render(), children[endIndex + 1].node);
                                 }
