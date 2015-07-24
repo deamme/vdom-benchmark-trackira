@@ -1319,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
-                    firstChild.detach();
+                    firstChild.destroy();
                     container.appendChild(lastChild.render());
                 }
 
@@ -1352,21 +1352,21 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 updated = true;
                             } else {
                                 // Detach the node
-                                firstChild.detach();
+                                firstChild.destroy();
                             }
                         }
 
                         if (updated) {
                             for (length = oldChildren.length; index < length; index += 1) {
-                                oldChildren[index++].detach();
+                                oldChildren[index++].destroy();
                             }
                         } else {
                             container.appendChild(lastChild.render());
                         }
                     } else {
 
-                        var oldstartIndex = 0,
-                            startIndex = 0,
+                        var oldStartIndex = 0,
+                            StartIndex = 0,
                             oldEndIndex = oldChildren.length - 1,
                             oldStartNode = oldChildren[0],
                             oldEndNode = oldChildren[oldEndIndex],
@@ -1376,17 +1376,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             map,
                             node;
 
-                        while (oldstartIndex <= oldEndIndex && startIndex <= endIndex) {
+                        while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
 
                             if (oldStartNode === undefined) {
-                                oldstartIndex++;
+                                oldStartIndex++;
                             } else if (oldEndNode === undefined) {
                                 oldEndIndex--;
                                 // Update nodes with the same key at the beginning.	
                             } else if (oldStartNode.equalTo(startNode)) {
                                     oldStartNode.patch(startNode);
-                                    oldstartIndex++;
-                                    startIndex++;
+                                    oldStartIndex++;
+                                    StartIndex++;
                                     // Update nodes with the same key at the end.	
                                 } else if (oldEndNode.equalTo(endNode)) {
                                         oldEndNode.patch(endNode);
@@ -1398,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                                             container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
 
-                                            oldstartIndex++;
+                                            oldStartIndex++;
 
                                             endIndex--;
 
@@ -1408,11 +1408,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                 oldEndNode.patch(startNode);
                                                 container.insertBefore(oldEndNode.node, oldStartNode.node);
                                                 oldEndIndex--;
-                                                startIndex++;
+                                                StartIndex++;
                                             } else {
 
                                                 if (map === undefined) {
-                                                    map = keyMapping(oldChildren, oldstartIndex, oldEndIndex);
+                                                    map = keyMapping(oldChildren, oldStartIndex, oldEndIndex);
                                                 }
 
                                                 index = map[startNode.key];
@@ -1429,27 +1429,27 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                     container.insertBefore(startNode.render(), oldStartNode.node);
                                                 }
 
-                                                startIndex++;
+                                                StartIndex++;
                                             }
-                            oldStartNode = oldChildren[oldstartIndex];
+                            oldStartNode = oldChildren[oldStartIndex];
                             oldEndNode = oldChildren[oldEndIndex];
                             endNode = children[endIndex];
-                            startNode = children[startIndex];
+                            startNode = children[StartIndex];
                         }
-                        if (oldstartIndex > oldEndIndex) {
+                        if (oldStartIndex > oldEndIndex) {
 
-                            for (; startIndex <= endIndex; startIndex++) {
+                            for (; StartIndex <= endIndex; StartIndex++) {
                                 if (children[endIndex + 1] === undefined) {
-                                    container.appendChild(children[startIndex].render());
+                                    container.appendChild(children[StartIndex].render());
                                 } else {
-                                    container.insertBefore(children[startIndex].render(), children[endIndex + 1].node);
+                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
                                 }
                             }
-                        } else if (startIndex > endIndex) {
+                        } else if (StartIndex > endIndex) {
 
-                            for (; oldstartIndex <= oldEndIndex; oldstartIndex++) {
-                                if (oldChildren[oldstartIndex] !== undefined) {
-                                    oldChildren[oldstartIndex].detach();
+                            for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
+                                if (oldChildren[oldStartIndex] !== undefined) {
+                                    oldChildren[oldStartIndex].destroy();
                                 }
                             }
                         }
@@ -1644,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 node._handler = undefined;
             }
+
         }
         // Handle hooks
         if (hooks !== undefined) {
@@ -1728,6 +1729,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.events = options.events;
 
         /**
+
          * Callbacks / lifecycle hooks
          */
         this.hooks = options.hooks;
@@ -2234,6 +2236,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 return val ? val : true;
             } else if (type === "select") {
+
 
                 if (node.multiple) {
 
