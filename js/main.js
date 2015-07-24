@@ -6,7 +6,7 @@ var Text = Trackira.Text;
 var patch = Trackira.patch;
 
 var NAME = 'Trackira';
-var VERSION = Trackira.version;
+var VERSION = "0.1.8";
 
 function renderTree(nodes) {
   var children = [];
