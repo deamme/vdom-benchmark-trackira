@@ -1366,9 +1366,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             toStartNode = children[0],
                             toEndNode = children[toEndIndex],
                             ChildrenMap,
-                            node,
-                            nextPos,
-                            next;
+                            node;
 
                         while (fromStartIndex <= fromEndIndex && toStartIndex <= toEndIndex) {
 
@@ -1390,13 +1388,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                     } else if (fromStartNode.equalTo(toEndNode)) {
                                             fromStartNode.patch(toEndNode);
 
-                                            nextPos = toEndIndex + 1;
+                                            container.insertBefore(fromStartNode.node, fromEndNode.node.nextElementSibling);
 
-                                            next = nextPos < children.length ? children[nextPos].node : null;
-                                            // move the child...
-                                            container.insertBefore(fromStartNode.node, next);
                                             fromStartIndex++;
-
 
                                             toEndIndex--;
 
@@ -1499,6 +1493,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
             }
             /**
+
              * There is no 'previousProps', so we just insert all properties
              */
         } else if (properties != null) {
