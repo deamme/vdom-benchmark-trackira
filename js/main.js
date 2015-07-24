@@ -2416,7 +2416,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8"
+        version: "0.1.8a"
     };
 
     return trackira;
