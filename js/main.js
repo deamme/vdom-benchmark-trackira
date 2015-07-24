@@ -1291,17 +1291,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Array} nodes
      */
     var detach = function detach(nodes) {
+        var index = 0,
+            length = nodes.length;
+        for (; index < length; index += 1) {
 
-        if (nodes.length === 1) {
-            nodes[0].detach();
-        } else {
-
-            var index = 0,
-                length = nodes.length;
-            for (; index < length; index += 1) {
-
-                nodes[index].detach();
-            }
+            nodes[index].detach();
         }
     };
 
