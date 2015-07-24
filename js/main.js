@@ -1291,11 +1291,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Array} nodes
      */
     var detach = function detach(nodes) {
-        var index = 0,
-            length = nodes.length;
-        for (; index < length; index += 1) {
 
-            nodes[index].detach();
+        if (nodes.length === 1) {
+            nodes[0].detach();
+        } else {
+
+            var index = 0,
+                length = nodes.length;
+            for (; index < length; index += 1) {
+
+                nodes[index].detach();
+            }
         }
     };
 
@@ -1712,8 +1718,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
     var equalTo = function equalTo(node) {
 
-        return !(this.key !== node.key || // "key" highest priority in "patching"
-        this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
+        return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
     };
 
     var init = function init(tagName, options, children) {
