@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var trimRegExp = /^\s+|\s+$/gm;
+    var trimRegExp = /-{2,}/g;
 
     /**
      * Initialize a new `Comment`.
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
          * Returns an html representation of the comment node.
          */
         toHTML: function toHTML() {
-            return "<!-- " + this.text.replace(trimRegExp, "") + " -->";
+            return "<!-- " + this.text.replace(trimRegExp, "-") + " -->";
         },
 
         /**
@@ -494,11 +494,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
         var namespace = this.namespace;
         var tagName = this.tagName;
         var typeExtension = this.typeExtension;
+        var doc = document;
 
         if (typeExtension) {
-            return namespace ? document.createElementNS(namespace, tagName, typeExtension) : document.createElement(tagName, typeExtension);
+            return namespace ? doc.createElementNS(namespace, tagName, typeExtension) : doc.createElement(tagName, typeExtension);
         } else {
-            return namespace ? document.createElementNS(namespace, tagName) : document.createElement(tagName);
+            return namespace ? doc.createElementNS(namespace, tagName) : doc.createElement(tagName);
         }
     };
 
@@ -643,7 +644,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         allowTransparency: true,
         alt: true,
         async: 1,
-
         autocomplete: true,
         autofocus: 1,
         autoplay: 1,
@@ -1433,6 +1433,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             for (; startIndex <= endIndex; startIndex++) {
                                 if (children[endIndex + 1] === undefined) {
                                     container.appendChild(children[startIndex].render());
+
                                 } else {
                                     container.insertBefore(children[startIndex].render(), children[endIndex + 1].node);
                                 }
