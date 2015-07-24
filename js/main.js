@@ -323,15 +323,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
         return value instanceof Array;
     };
 
-    var normalizeChildren = function normalizeChildren(children) {
+    var normalize = function normalize(nodes) {
 
-        if (typeof children === "function") {
-            children = [children(children)];
-        } else if (!isArray(children)) {
-            children = [children];
+        if (typeof nodes === "function") {
+            nodes = nodes(nodes);
         }
 
-        return children;
+        if (!isArray(nodes)) {
+            nodes = [nodes];
+        }
+
+        return nodes;
     };
 
     var append = function append(node, children, parent) {
@@ -344,8 +346,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
 
         if (node) {
-            // normalize child nodes
-            children = normalizeChildren(children, parent);
+            // normalize the children
+            children = normalize(children, parent);
 
             var i = 0,
                 j = 0,
@@ -587,7 +589,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         serialized += styleName + ":";
                         serialized += typeof styleValue === "number" ? styleValue + "px" : styleValue;
                         serialized += ";";
-
                     }
                 }
             }
@@ -658,7 +659,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         charset: true,
         challenge: true,
         checked: 1,
-
         classID: true,
         className: true,
         cols: true,
@@ -1822,14 +1822,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         return this.apply(selector, factory, data, function (root, nodes) {
 
-            /**
-            * Normalize the child nodes
-            */
-            nodes = normalizeChildren(nodes);
+            // Normalize the nodes
+            nodes = normalize(nodes);
 
-            /**
-            * Render child nodes and attach to the root node
-            */
+            // Render children
             if (nodes.length) {
 
                 if (nodes.length === 1 && nodes[0]) {
@@ -1882,8 +1878,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var updateChildren = function updateChildren(root, prevChildren, newChildren) {
         if (prevChildren !== newChildren) {
-            // Normalize the child nodes, and patch/diff the children
-            return patch(root, prevChildren, normalizeChildren(newChildren));
+            return patch(root, prevChildren, normalize(newChildren));
         }
     };
 
@@ -2170,6 +2165,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var unbind = function unbind(type, useCapture) {
+
 
         if (arguments.length) {
 
