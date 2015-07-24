@@ -1586,32 +1586,42 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_patch = function prototype_patch(ref) {
 
-        if (this.equalTo(ref)) {
-            var node = this.node;
+        if (!this.equalTo(ref)) {
 
-            // Special case - select
-            var tagName = this.tagName;
-            var props = this.props;
-            var attrs = this.attrs;
-            var children = this.children;
-            var events = this.events;
-            var hooks = this.hooks;
-            if (tagName === "select" && (ref.props || ref.attrs)) {
+            return ref.render(this.parent);
+        }
 
-                renderSelect(ref);
-            }
+        var node = this.node;
 
-            // Patch / diff properties
+        // Special case - select
+        var tagName = this.tagName;
+        var props = this.props;
+        var attrs = this.attrs;
+        var children = this.children;
+        var events = this.events;
+        var hooks = this.hooks;
+        if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
+
+            renderSelect(ref);
+        }
+
+        ref.node = this.node;
+
+        // Patch / diff children
+        if (children !== ref.children) {
+            patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
+        }
+
+        // Patch / diff properties
+        if (props !== ref.props) {
             patchProperties(node, ref.props, props);
-
-            // Patch / diff attributes
+        }
+        // Patch / diff attributes
+        if (attrs !== ref.attrs) {
             patchAttributes(node, ref.attrs, attrs);
+        }
 
-            // Patch / diff children
-            if (children !== ref.children) {
-                patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-            }
-
+        if (events !== ref.events) {
             // Handle events
             if (ref.events) {
 
@@ -1620,17 +1630,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 node._handler = undefined;
             }
-
-            // Handle hooks
-            if (hooks !== undefined) {
-                if (hooks.updated) {
-                    hooks.updated(this, node);
-                }
-            }
-
-            return ref.node = this.node;
         }
-        return ref.render(this.parent);
+        // Handle hooks
+        if (hooks !== undefined) {
+            if (hooks.updated) {
+                hooks.updated(this, node);
+            }
+        }
+
+        return node;
     };
 
     /**
@@ -2085,7 +2093,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 e.delegateTarget = e.delegateTarget.parentNode;
             }
         };
-
     };
 
     /**
