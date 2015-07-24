@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8a
+ * @Version: v0.1.8b
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} to
      * @return {boolean}
      */
-
     Text.prototype.equalTo = function (node) {
         return this.flag === node.flag;
     };
@@ -324,17 +323,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         return value instanceof Array;
     };
 
-    var normalize = function normalize(nodes) {
+    var normalizeChildren = function normalizeChildren(children) {
 
-        if (typeof nodes === "function") {
-            nodes = nodes(nodes);
+        if (typeof children === "function") {
+            children = [children(children)];
+        } else if (!isArray(children)) {
+            children = [children];
         }
 
-        if (!isArray(nodes)) {
-            nodes = [nodes];
-        }
-
-        return nodes;
+        return children;
     };
 
     var append = function append(node, children, parent) {
@@ -347,8 +344,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
 
         if (node) {
-            // normalize the children
-            children = normalize(children, parent);
+            // normalize child nodes
+            children = normalizeChildren(children, parent);
 
             var i = 0,
                 j = 0,
@@ -750,6 +747,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         step: true,
         style: true,
         tabIndex: true,
+
         target: true,
         title: true,
         type: true,
@@ -1209,8 +1207,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 var index = 0,
                     length = children.length;
-                for (; index < length; index += 1) {
 
+                for (; index < length; index += 1) {
+                    // ignore incompatible children
                     if (children[index]) {
 
                         node.appendChild(children[index].render(this));
@@ -1823,10 +1822,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         return this.glue(selector, factory, data, function (root, nodes) {
 
-            // Normalize the nodes
-            nodes = normalize(nodes);
+            /**
+             * Normalize the child nodes
+             */
+            nodes = normalizeChildren(nodes);
 
-            // Render children
+            /**
+             * Render child nodes and attach to the root node
+             */
             if (nodes.length) {
 
                 if (nodes.length === 1 && nodes[0]) {
@@ -1834,13 +1837,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     root.appendChild(nodes[0].render());
                 } else {
 
-                    var i = 0,
-                        len = nodes.length;
-                    for (; i < len; i++) {
-                        // ignore incompatible children
-                        if (nodes[i]) {
+                    var index = 0,
+                        length = nodes.length;
+                    for (; index < length; index += 1) {
 
-                            root.appendChild(nodes[i].render());
+                        // ignore incompatible children
+                        if (nodes[index]) {
+
+                            root.appendChild(nodes[index].render());
                         }
                     }
                 }
@@ -1879,7 +1883,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var updateChildren = function updateChildren(root, prevChildren, newChildren) {
         if (prevChildren !== newChildren) {
-            return patch(root, prevChildren, normalize(newChildren));
+            // Normalize the child nodes, and patch/diff the children
+            return patch(root, prevChildren, normalizeChildren(newChildren));
         }
     };
 
@@ -2417,7 +2422,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8a"
+        version: "0.1.8b"
     };
 
     return trackira;
