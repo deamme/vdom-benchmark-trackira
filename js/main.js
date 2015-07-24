@@ -1366,7 +1366,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             toStartNode = children[0],
                             toEndNode = children[toEndIndex],
                             ChildrenMap,
-                            node;
+                            node,
+                            nextPos,
+                            next;
 
                         while (fromStartIndex <= fromEndIndex && toStartIndex <= toEndIndex) {
 
@@ -1388,16 +1390,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                     } else if (fromStartNode.equalTo(toEndNode)) {
                                             fromStartNode.patch(toEndNode);
 
-                                            var nextPos = toEndIndex + 1;
+                                            nextPos = toEndIndex + 1;
 
-                                            var next = nextPos < children.length ? children[nextPos].node : null;
+                                            next = nextPos < children.length ? children[nextPos].node : null;
                                             // move the child...
-                                            if (next) {
-                                                container.insertBefore(fromStartNode.node, next);
-                                            } else {
-                                                container.appendChild(fromStartNode.node);
-                                            }
+                                            container.insertBefore(fromStartNode.node, next);
                                             fromStartIndex++;
+
 
                                             toEndIndex--;
 
