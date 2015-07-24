@@ -6,7 +6,7 @@ var Text = Trackira.Text;
 var patch = Trackira.patch;
 
 var NAME = 'Trackira';
-var VERSION = "0.1.8";
+var VERSION = Trackira.version;
 
 function renderTree(nodes) {
   var children = [];
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8
+ * @Version: v0.1.7
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -1208,9 +1208,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 var index = 0,
                     length = children.length;
-
                 for (; index < length; index += 1) {
-                    // ignore incompatible children
+
                     if (children[index]) {
 
                         node.appendChild(children[index].render(this));
@@ -1821,16 +1820,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_mount = function prototype_mount(selector, factory, data) {
 
-        return this.glue(selector, factory, data, function (root, nodes) {
+        return this.apply(selector, factory, data, function (root, nodes) {
 
             /**
-             * Normalize the child nodes
-             */
+            * Normalize the child nodes
+            */
             nodes = normalizeChildren(nodes);
 
             /**
-             * Render child nodes and attach to the root node
-             */
+            * Render child nodes and attach to the root node
+            */
             if (nodes.length) {
 
                 if (nodes.length === 1 && nodes[0]) {
@@ -1838,14 +1837,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     root.appendChild(nodes[0].render());
                 } else {
 
-                    var index = 0,
-                        length = nodes.length;
-                    for (; index < length; index += 1) {
-
+                    var i = 0,
+                        len = nodes.length;
+                    for (; i < len; i++) {
                         // ignore incompatible children
-                        if (nodes[index]) {
+                        if (nodes[i]) {
 
-                            root.appendChild(nodes[index].render());
+                            root.appendChild(nodes[i].render());
                         }
                     }
                 }
@@ -1960,7 +1958,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, factory, container, children) {
+    var apply = function apply(selector, factory, container, children) {
         if (container === undefined) container = {};
 
         // Find the selector where we are going to mount the virtual tree
@@ -1996,7 +1994,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-        return this.glue(selector, factory, data, append);
+        return this.apply(selector, factory, data, append);
     };
 
     // Generate a unique identifier
@@ -2042,63 +2040,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var Tree = function Tree() {
-        /**
-         * Initialize the tree
-         */
+
         this.init();
     };
 
     Tree.prototype = {
-
-        /**
-         * Initialize
-         */
         init: prototype_init,
-
-        /**
-         * "Glue" / attach virtual trees or server rendered HTML markup 
-         * to a given selector
-         */
-        glue: glue,
-
-        /**
-         * Append server rendered HTML markup
-         */
+        apply: apply,
         append: Tree_prototype_append,
-
-        /**
-         * Mount a virtual tree
-         */
         mount: prototype_mount,
-
-        /**
-         * Unmount a virtual tree
-         */
         unmount: unmount,
-
-        /**
-         * Update a virtual tree
-         */
         update: update,
-
-        /**
-         * Return overview over mounted tree, or all mounted trees
-         */
         mounted: mounted,
-
-        /**
-         * Generate a unique identifier for mounting virtual trees
-         */
         guid: prototype_guid,
-
-        /**
-         * Returns all child nodes beloning to the mounted tree
-         */
         children: prototype_children,
-
-        /**
-         * Return a real DOM node where the virtual tree are mounted
-         */
         mountPoint: mountPoint
     };
 
@@ -2423,7 +2378,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8"
+        version: "0.1.7"
     };
 
     return trackira;
