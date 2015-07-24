@@ -108,105 +108,109 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.text = text;
     }
 
-    Text.prototype = {
+    /**
+     * The type, used to identify the type of this node
+     */
+    Text.prototype.flag = flags__TEXT;
 
-        /**
-         * The type, used to identify the type of this node
-         */
-
-        flag: flags__TEXT,
-        /**
-         * Creates a virtual text node.
-         * @return {!Text}
-         */
-        create: function create() {
-            if (!this.node) {
-                this.node = document.createTextNode(this.text);
-            }
-            return this.node;
-        },
-        /**
-         * Render a virtual text node
-         *
-         * @return Object
-         */
-        render: function render() {
-            return this.create();
-        },
-
-        /**
-         * Attaches an existing textual DOM element.
-         *
-         * @param  {Object} node
-         * @return {Object}
-         */
-        append: function append(node) {
-            return this.node = node;
-        },
-
-        /**
-         * Patches the node by updating the nodeValue.
-         *
-         * @param {object} to Contains the next text content.
-         * @return {Object}
-         */
-        patch: function patch(ref) {
-
-            if (this.equalTo(ref)) {
-
-                ref.node = this.node;
-
-                // .nodeValue gives better performance then textContent
-                // http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
-                if (ref.text !== this.text) {
-                    this.node.nodeValue = ref.text;
-                }
-
-                return this.node;
-            }
-
-            // re-render...
-            ref.render();
-        },
-
-        /**
-         * Destroys the text node attached to the virtual node.
-         */
-        destroy: function destroy() {
-            var node = this.node;
-            if (node.parentNode) {
-                node.parentNode.removeChild(node);
-            }
-        },
-        /**
-         * Creates an html markup of the text node. This node is not intended to have
-         * any features besides containing text content. 
-         *
-         * Note! The text node will only be escaped if a boolean ( true ) are passed in as
-         * the first argument.
-         *
-         * @param {Boolean} escape
-         *
-         */
-        toHTML: function toHTML(escape) {
-            return escape ? escapeHtml(this.text) : this.text;
-        },
-        /**
-         * Removes the DOM node attached to the virtual node.
-         */
-        detach: function detach() {
-            this.destroy();
-        },
-
-        /**
-         * Checks if two virtual text nodes are equal to each other, and they can be updated.
-         *
-         * @param {Object} to
-         * @return {boolean}
-         */
-        equalTo: function equalTo(node) {
-            return this.flag === node.flag;
+    /**
+     * Creates a virtual text node.
+     * @return {!Text}
+     */
+    Text.prototype.create = function () {
+        if (!this.node) {
+            this.node = document.createTextNode(this.text);
         }
+        return this.node;
+    };
+
+    /**
+     * Render a virtual text node
+     *
+     * @return Object
+     */
+    Text.prototype.render = function () {
+        return this.create();
+    };
+
+    /**
+     * Attaches an existing textual DOM element.
+     *
+     * @param  {Object} node
+     * @return {Object}
+     */
+    Text.prototype.append = function (node) {
+        return this.node = node;
+    };
+
+    /**
+     * Patches the node by updating the nodeValue.
+     *
+     * @param {object} to Contains the next text content.
+     * @return {Object}
+     */
+    Text.prototype.patch = function (ref) {
+
+        if (this.equalTo(ref)) {
+
+            ref.node = this.node;
+
+            // .nodeValue gives better performance then textContent
+            // http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
+            if (ref.text !== this.text) {
+                this.node.nodeValue = ref.text;
+            }
+
+            return this.node;
+        }
+
+        // re-render...
+        ref.render();
+    };
+
+    /**
+     * Destroys the text node attached to the virtual node.
+     */
+    Text.prototype.destroy = function () {
+        var node = this.node;
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    };
+
+    /**
+     * Creates an html markup of the text node. This node is not intended to have
+     * any features besides containing text content. 
+     *
+     * Note! The text node will only be escaped if a boolean ( true ) are passed in as
+     * the first argument.
+     *
+     * @param {Boolean} escape
+     *
+     */
+    Text.prototype.toHTML = function (escape) {
+        if (escape) {
+            return escapeHtml(this.text);
+        } else {
+            return this.text;
+        }
+    };
+
+    /**
+     * Removes the DOM node attached to the virtual node.
+     */
+    Text.prototype.detach = function () {
+        this.destroy();
+    };
+
+    /**
+     * Checks if two virtual text nodes are equal to each other, and they can be updated.
+     *
+     * @param {Object} to
+     * @return {boolean}
+     */
+    Text.prototype.equalTo = function (node) {
+        return this.flag === node.flag;
     };
 
     var trimRegExp = /-{2,}/g;
@@ -223,97 +227,96 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.text = comment;
     }
 
-    Comment.prototype = {
-        /**
-         * The type, used to identify the type of this node
-         */
-        flag: flags__COMMENT,
-        /**
-         * Creates a virtual comment node.
-         * @return {!Comment}
-         */
-        create: function create() {
-            if (!this.node) {
-                this.node = document.createComment(this.text);
-            }
-            return this.node;
-        },
+    /**
+     * The type, used to identify the type of this node
+     */
+    Comment.prototype.flag = flags__COMMENT;
 
-        /**
-         * Render and return a virtual comment node
-         *
-         * @return Object
-         */
-        render: function render() {
-            return this.create();
-        },
-
-        /**
-         * Patches the node by updating the nodeValue.
-         *
-         * @param {object} to Contains the next text content.
-         * @return {Object}
-         */
-        patch: function patch(ref) {
-
-            if (this.equalTo(ref)) {
-
-                // .nodeValue gives better performance then textContent
-                // http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
-                if (ref.text !== this.text) {
-                    this.node.nodeValue = ref.text;
-                }
-                return ref.node = this.node;
-            }
-
-            // re-render...
-            ref.render();
-        },
-
-        /**
-         * Append an existing textual DOM element.
-         *
-         * @param  {Object} node
-         * @return {Object}
-         */
-        append: function append(node) {
-            return this.node = node;
-        },
-
-        /**
-         * Returns an html representation of the comment node.
-         */
-        toHTML: function toHTML() {
-            return "<!-- " + this.text.replace(trimRegExp, "-") + " -->";
-        },
-
-        /**
-         * Destroys the text node attached to the virtual node.
-         */
-        destroy: function destroy() {
-            var node = this.node;
-            if (node.parentNode) {
-                node.parentNode.removeChild(node);
-            }
-        },
-
-        /**
-         * Removes the DOM node attached to the virtual node.
-         */
-        detach: function detach() {
-
-            this.destroy();
-        },
-
-        /**
-         * Checks if two virtual comment nodes are equal to each other, and if they can be updated.
-         *
-         * @param {Object} to
-         * @return {boolean}
-         */
-        equalTo: function equalTo(node) {
-            return this.flag === node.flag;
+    /**
+     * Creates a virtual comment node.
+     * @return {!Comment}
+     */
+    Comment.prototype.create = function () {
+        if (!this.node) {
+            this.node = document.createComment(this.text);
         }
+        return this.node;
+    };
+
+    /**
+     * Render and return a virtual comment node
+     *
+     * @return Object
+     */
+    Comment.prototype.render = function () {
+        return this.create();
+    };
+
+    /**
+     * Patches the node by updating the nodeValue.
+     *
+     * @param {object} to Contains the next text content.
+     * @return {Object}
+     */
+    Comment.prototype.patch = function (ref) {
+
+        if (this.equalTo(ref)) {
+
+            // .nodeValue gives better performance then textContent
+            // http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
+            if (ref.text !== this.text) {
+                this.node.nodeValue = ref.text;
+            }
+            return ref.node = this.node;
+        }
+
+        // re-render...
+        ref.render();
+    };
+
+    /**
+     * Append an existing textual DOM element.
+     *
+     * @param  {Object} node
+     * @return {Object}
+     */
+    Comment.prototype.append = function (node) {
+        return this.node = node;
+    };
+
+    /**
+     * Returns an html representation of the comment node.
+     */
+    Comment.prototype.toHTML = function () {
+        return "<!-- " + this.text.replace(trimRegExp, "-") + " -->";
+    };
+
+    /**
+     * Destroys the text node attached to the virtual node.
+     */
+    Comment.prototype.destroy = function () {
+        var node = this.node;
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    };
+
+    /**
+     * Removes the DOM node attached to the virtual node.
+     */
+    Comment.prototype.detach = function () {
+
+        this.destroy();
+    };
+
+    /**
+     * Checks if two virtual comment nodes are equal to each other, and if they can be updated.
+     *
+     * @param {Object} to
+     * @return {boolean}
+     */
+    Comment.prototype.equalTo = function (node) {
+        return this.flag === node.flag;
     };
 
     var isArray = function isArray(value) {
@@ -1312,7 +1315,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
              * Both 'oldChildren' and 'children' are a lonely child
              */
             if (oldChildren.length === 1 && children.length === 1) {
-
 
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
