@@ -1551,14 +1551,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	hook.attr.style = function (node, attrName, attrValue, previousAttr) {
 		patchStyles(node, attrName, attrValue, previousAttr);
 	};
+	// Support: IE9+
+	// Restore value when type is changed
 
-	hook.attr.type = function (node, attrName, attrValue) {
-		special_type(node, attrName, attrValue);
+	hook.attr.type = function (node, attrName, attrValue, previousAttr) {
+		if (previousAttr !== attrValue) {
+			special_type(node, attrName, attrValue);
+		}
 	};
 
-	hook.attr.value = function (node, attrName, attrValue) {
-		node.setAttribute(attrName, attrValue);
-		node[attrName] = attrValue ? attrValue : "";
+	hook.attr.value = function (node, attrName, attrValue, previousAttr) {
+		if (previousAttr !== attrValue) {
+			node.setAttribute(attrName, attrValue);
+			node[attrName] = attrValue ? attrValue : "";
+		}
 	};
 
 	var patchHook = hook;
@@ -1594,15 +1600,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 				if (patchHook.attr[attrName]) {
 					patchHook.attr[attrName](node, attrName, attrValue, previousAttr[attrName]);
-				} else if (previousAttr[attrName] !== attrValue) {
-					// Support: IE9+
-					// Restore value when type is changed
-					if (patchHook.attr[attrName]) {
-						patchHook.attr[attrName](node, attrName, attrValue);
-					} else if (attrValue != null) {
-
-						node.setAttribute(attrName, attrValue);
-					}
+				} else if (previousAttr[attrName] !== attrValue && attrValue != null) {
+					node.setAttribute(attrName, attrValue);
 				}
 			}
 
@@ -2152,6 +2151,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * Unbind an event `type`' to a callback function
   * @param {Element} node
   * @param {String} type
+
   * @param {Function} callback
   * @param {Boolean} useCapture
   */
