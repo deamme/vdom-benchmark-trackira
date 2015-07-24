@@ -1237,7 +1237,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
     /**
      * Remove a real DOM element from where it was inserted
      */
-    var prototype_destroy = function prototype_destroy() {
+    var destroy = function destroy() {
         var node = this.node;
         var hooks = this.hooks;
 
@@ -1319,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
-                    firstChild.destroy();
+                    firstChild.detach();
                     container.appendChild(lastChild.render());
                 }
 
@@ -1352,13 +1352,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                 updated = true;
                             } else {
                                 // Detach the node
-                                firstChild.destroy();
+                                firstChild.detach();
                             }
                         }
 
                         if (updated) {
                             for (length = oldChildren.length; index < length; index += 1) {
-                                oldChildren[index++].destroy();
+                                oldChildren[index++].detach();
                             }
                         } else {
                             container.appendChild(lastChild.render());
@@ -1449,7 +1449,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                             for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
                                 if (oldChildren[oldStartIndex] !== undefined) {
-                                    oldChildren[oldStartIndex].destroy();
+                                    oldChildren[oldStartIndex].detach();
                                 }
                             }
                         }
@@ -1644,7 +1644,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 node._handler = undefined;
             }
-
         }
         // Handle hooks
         if (hooks !== undefined) {
@@ -1659,31 +1658,49 @@ document.addEventListener('DOMContentLoaded', function(e) {
     /**
      * Removes the DOM node attached to the virtual node.
      */
-    var prototype_detach = function prototype_detach(destroy) {
+    var prototype_detach = function prototype_detach() {
         var children = this.children;
-        var hooks = this.hooks;
 
+        /**
+         * If any children, trigger the 'detach' hook on each child node
+         */
+        var hooks = this.hooks;
         if (children.length) {
 
-            var index = children.length,
-                node;
+            if (children.length === 1) {
 
-            while (index--) {
+                var firstChild = children[0];
 
-                node = children[index];
+                if (firstChild.hooks && firstChild.hooks.detach) {
 
-                if (node.hooks && node.hooks.detach) {
+                    firstChild.hooks.detach(firstChild, firstChild.node);
+                }
+            } else {
 
-                    node.hooks.detach(node, node.node);
+                var index = children.length,
+                    node;
+
+                while (index--) {
+
+                    node = children[index];
+
+                    if (node.hooks && node.hooks.detach) {
+
+                        node.hooks.detach(node, node.node);
+                    }
                 }
             }
         }
 
+        /**
+         * Trigger the 'detach' hook on the root node
+         *
+         */
         if (hooks && hooks.detach) {
 
             hooks.detach(this, this.node);
         }
-
+        // Destroy the node...
         this.destroy();
     };
 
@@ -1729,7 +1746,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.events = options.events;
 
         /**
-
          * Callbacks / lifecycle hooks
          */
         this.hooks = options.hooks;
@@ -1783,7 +1799,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         toHTML: toHTML,
         render: render,
         patch: prototype_patch,
-        destroy: prototype_destroy,
+        destroy: destroy,
         detach: prototype_detach,
         equalTo: equalTo,
         init: init
@@ -2236,7 +2252,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 return val ? val : true;
             } else if (type === "select") {
-
 
                 if (node.multiple) {
 
