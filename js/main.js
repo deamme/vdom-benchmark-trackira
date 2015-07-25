@@ -1181,20 +1181,27 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         var node = this.node;
 
-        // Special case - select
-        if (tagName === "select") {
+        /**
+         * Note! We are checking for 'null' for 'attrs' and 'props'
+         * twice because of performance optimizing
+         */
+        if (props != null || attrs != null) {
 
-            renderSelect(this);
-        }
+            // Special case - select
+            if (tagName === "select") {
 
-        // Render properties
-        if (props != null) {
-            renderProperties(node, props);
-        }
+                renderSelect(this);
+            }
 
-        // Render attributes
-        if (attrs != null) {
-            renderAttributes(node, attrs);
+            // Render properties
+            if (props != null) {
+                renderProperties(node, props);
+            }
+
+            // Render attributes
+            if (attrs != null) {
+                renderAttributes(node, attrs);
+            }
         }
 
         // Render children
@@ -1636,60 +1643,58 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_patch = function prototype_patch(ref, context) {
 
-        if (!this.equalTo(ref)) {
+        if (this.equalTo(ref)) {
+            var node = this.node;
+            var tagName = this.tagName;
+            var props = this.props;
+            var attrs = this.attrs;
+            var children = this.children;
+            var events = this.events;
+            var hooks = this.hooks;
 
-            return ref.render(this.parent);
-        }
+            ref.node = this.node;
 
-        var node = this.node;
-        var tagName = this.tagName;
-        var props = this.props;
-        var attrs = this.attrs;
-        var children = this.children;
-        var events = this.events;
-        var hooks = this.hooks;
+            // Special case - select
+            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
 
-        ref.node = this.node;
-
-        // Special case - select
-        if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-            renderSelect(ref);
-        }
-
-        // Patch / diff properties
-        if (props !== ref.props) {
-            patchProperties(node, ref.props, props);
-        }
-
-        // Patch / diff attributes
-        if (attrs !== ref.attrs) {
-            patchAttributes(node, ref.attrs, attrs);
-        }
-
-        if (events !== ref.events) {
-            // Handle events
-            if (ref.events) {
-
-                node._handler = ref;
-            } else if (events !== undefined) {
-
-                node._handler = undefined;
+                renderSelect(ref);
             }
-        }
-        // Handle hooks
-        if (hooks !== undefined) {
-            if (hooks.updated) {
-                hooks.updated(this, node);
+
+            // Patch / diff properties
+            if (props !== ref.props) {
+                patchProperties(node, ref.props, props);
             }
-        }
 
-        // Patch / diff children
-        if (children !== ref.children) {
-            patch(context || node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-        }
+            // Patch / diff attributes
+            if (attrs !== ref.attrs) {
+                patchAttributes(node, ref.attrs, attrs);
+            }
 
-        return node;
+            if (events !== ref.events) {
+                // Handle events
+                if (ref.events) {
+
+                    node._handler = ref;
+                } else if (events !== undefined) {
+
+                    node._handler = undefined;
+                }
+            }
+            // Handle hooks
+            if (hooks !== undefined) {
+                if (hooks.updated) {
+                    hooks.updated(this, node);
+                }
+            }
+
+            // Patch / diff children
+            if (children !== ref.children) {
+                patch(context || node.shadowRoot ? node.shadowRoot : node, children, ref.children);
+            }
+
+            return node;
+        }
+        return ref.render();
     };
 
     /**
@@ -1749,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
     var equalTo = function equalTo(node) {
 
-        return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
+        return this.key === node.key && this.tagName === node.tagName && this.flag === node.flag && this.namespace === node.namespace && this.typeExtension === node.typeExtension;
     };
 
     var init = function init(tagName, options, children) {
@@ -2126,6 +2131,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
          * Update a virtual tree
          */
         update: update,
+
 
         /**
          * Return overview over mounted tree, or all mounted trees
@@ -2691,7 +2697,6 @@ function initFromParentWindow(parent, name, version, id) {
     id: id
   }, '*');
 }
-
 
 function init(name, version, impl) {
   // Parse Query String.
