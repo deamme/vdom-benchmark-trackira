@@ -1173,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         if (!this.node) {
-            this.node = this.create();
+            this.create();
         }
 
         // create a new virtual element
@@ -1337,110 +1337,150 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
 
                 /**
-                 * 'children' is a single child node
+                 * 'oldChildren' is a single child node
                  */
-            } else if (childrenLength === 1) {
+            } else if (firstChildLength === 1) {
 
-                    for (index = 0, length = firstChildLength; index < length; index += 1 | 0) {
+                    // Fast path when a have 1 child.
+                    var aNode = oldChildren[0];
+                    var bNode;
+                    var updated = false;
+                    var i = 0;
 
-                        firstChild = oldChildren[index];
-
-                        if (!firstChild.equalTo(lastChild)) {
-                            // Detach the node
-                            firstChild.detach();
+                    if (aNode.key == null) {
+                        while (i < children.length) {
+                            bNode = children[i++];
+                            if (aNode.equalTo(bNode)) {
+                                aNode.patch(bNode);
+                                updated = true;
+                                break;
+                            }
+                            container.insertBefore(bNode.render(), aNode.node);
+                        }
+                    } else {
+                        while (i < children.length) {
+                            bNode = children[i++];
+                            if (aNode.key === bNode.key) {
+                                aNode.patch(bNode);
+                                updated = true;
+                                break;
+                            }
+                            container.insertBefore(bNode.render(), aNode.node);
                         }
                     }
-                } else {
+                    if (updated) {
+                        while (i < children.length) {
+                            container.appendChild(children[i++].render());
+                        }
+                    } else {
+                        aNode.detach();
+                    }
 
-                    var oldStartIndex = 0,
-                        StartIndex = 0,
-                        oldEndIndex = oldChildren.length - 1,
-                        oldStartNode = oldChildren[0],
-                        oldEndNode = oldChildren[oldEndIndex],
-                        endIndex = children.length - 1,
-                        startNode = children[0],
-                        endNode = children[endIndex],
-                        map,
-                        node;
+                    /**
+                     * 'children' is a single child node
+                     */
+                } else if (childrenLength === 1) {
 
-                    while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
+                        for (index = 0, length = firstChildLength; index < length; index += 1 | 0) {
 
-                        if (oldStartNode === undefined) {
-                            oldStartIndex++;
-                        } else if (oldEndNode === undefined) {
-                            oldEndIndex--;
-                            // Update nodes with the same key at the beginning.	
-                        } else if (oldStartNode.equalTo(startNode)) {
-                                oldStartNode.patch(startNode);
+                            firstChild = oldChildren[index];
+
+                            if (!firstChild.equalTo(lastChild)) {
+                                // Detach the node
+                                firstChild.detach();
+                            }
+                        }
+                    } else {
+
+                        var oldStartIndex = 0,
+                            StartIndex = 0,
+                            oldEndIndex = oldChildren.length - 1,
+                            oldStartNode = oldChildren[0],
+                            oldEndNode = oldChildren[oldEndIndex],
+                            endIndex = children.length - 1,
+                            startNode = children[0],
+                            endNode = children[endIndex],
+                            map,
+                            node;
+
+                        while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
+
+                            if (oldStartNode === undefined) {
                                 oldStartIndex++;
-                                StartIndex++;
-                                // Update nodes with the same key at the end.	
-                            } else if (oldEndNode.equalTo(endNode)) {
-                                    oldEndNode.patch(endNode);
-                                    oldEndIndex--;
-                                    endIndex--;
-                                    // Move nodes from left to right.
-                                } else if (oldStartNode.equalTo(endNode)) {
-                                        oldStartNode.patch(endNode);
-
-                                        container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
-
-                                        oldStartIndex++;
-
+                            } else if (oldEndNode === undefined) {
+                                oldEndIndex--;
+                                // Update nodes with the same key at the beginning.	
+                            } else if (oldStartNode.equalTo(startNode)) {
+                                    oldStartNode.patch(startNode);
+                                    oldStartIndex++;
+                                    StartIndex++;
+                                    // Update nodes with the same key at the end.	
+                                } else if (oldEndNode.equalTo(endNode)) {
+                                        oldEndNode.patch(endNode);
+                                        oldEndIndex--;
                                         endIndex--;
+                                        // Move nodes from left to right.
+                                    } else if (oldStartNode.equalTo(endNode)) {
+                                            oldStartNode.patch(endNode);
 
-                                        // Move nodes from right to left.	
-                                    } else if (oldEndNode.equalTo(startNode)) {
+                                            container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
 
-                                            oldEndNode.patch(startNode);
-                                            container.insertBefore(oldEndNode.node, oldStartNode.node);
-                                            oldEndIndex--;
-                                            StartIndex++;
-                                        } else {
+                                            oldStartIndex++;
 
-                                            if (map === undefined) {
-                                                map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
-                                            }
+                                            endIndex--;
 
-                                            index = map[startNode.key];
+                                            // Move nodes from right to left.	
+                                        } else if (oldEndNode.equalTo(startNode)) {
 
-                                            if (index) {
-
-                                                node = oldChildren[index];
-                                                oldChildren[index] = undefined;
-                                                node.patch(startNode);
-                                                container.insertBefore(node.node, oldStartNode.node);
+                                                oldEndNode.patch(startNode);
+                                                container.insertBefore(oldEndNode.node, oldStartNode.node);
+                                                oldEndIndex--;
+                                                StartIndex++;
                                             } else {
-                                                // create a new element
 
-                                                container.insertBefore(startNode.render(), oldStartNode.node);
+                                                if (map === undefined) {
+                                                    map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
+                                                }
+
+                                                index = map[startNode.key];
+
+                                                if (index) {
+
+                                                    node = oldChildren[index];
+                                                    oldChildren[index] = undefined;
+                                                    node.patch(startNode);
+                                                    container.insertBefore(node.node, oldStartNode.node);
+                                                } else {
+                                                    // create a new element
+
+                                                    container.insertBefore(startNode.render(), oldStartNode.node);
+                                                }
+
+                                                StartIndex++;
                                             }
-
-                                            StartIndex++;
-                                        }
-                        oldStartNode = oldChildren[oldStartIndex];
-                        oldEndNode = oldChildren[oldEndIndex];
-                        endNode = children[endIndex];
-                        startNode = children[StartIndex];
-                    }
-                    if (oldStartIndex > oldEndIndex) {
-
-                        for (; StartIndex <= endIndex; StartIndex++) {
-                            if (children[endIndex + 1] === undefined) {
-                                container.appendChild(children[StartIndex].render());
-                            } else {
-                                container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
-                            }
+                            oldStartNode = oldChildren[oldStartIndex];
+                            oldEndNode = oldChildren[oldEndIndex];
+                            endNode = children[endIndex];
+                            startNode = children[StartIndex];
                         }
-                    } else if (StartIndex > endIndex) {
+                        if (oldStartIndex > oldEndIndex) {
 
-                        for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
-                            if (oldChildren[oldStartIndex] !== undefined) {
-                                oldChildren[oldStartIndex].detach();
+                            for (; StartIndex <= endIndex; StartIndex++) {
+                                if (children[endIndex + 1] === undefined) {
+                                    container.appendChild(children[StartIndex].render());
+                                } else {
+                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
+                                }
+                            }
+                        } else if (StartIndex > endIndex) {
+
+                            for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
+                                if (oldChildren[oldStartIndex] !== undefined) {
+                                    oldChildren[oldStartIndex].detach();
+                                }
                             }
                         }
                     }
-                }
         }
 
         return children;
@@ -1535,6 +1575,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             var attrName, previousAttrValue, attrValue;
             for (attrName in previousAttr) {
+
 
                 if (!attrs || attrs[attrName] == null) {
 
@@ -1665,7 +1706,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
             } else {
 
                 var index = children.length,
-
                     node;
 
                 while (index--) {
