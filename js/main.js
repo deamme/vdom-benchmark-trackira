@@ -1139,6 +1139,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+	/**
+  * Inserts `childNode` as a child of `parentNode` at the `index`.
+  *
+  * @param {DOMElement} parentNode Parent node in which to insert.
+  * @param {Object} childNode Child node to insert.
+  * @param {number} index Index at which to insert the child.
+  */
+	var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
+		// Create the childNode node to get a real DOM node we can use for injection
+		childNode.create();
+		// By exploiting arrays returning `undefined` for an undefined index, we can
+		// rely exclusively on `insertBefore(node, null)` instead of also using
+		// `appendChild(node)`. However, using `undefined` is not allowed by all
+		// browsers so we must replace it with `null`.
+		parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+		// render the node and it's children after injection to the DOM
+		childNode.render();
+	};
+
 	var render = function render(parent) {
 		var tagName = this.tagName;
 		var children = this.children;
@@ -1170,8 +1189,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 		}
 
-		// Avoid touching the DOM, and re-create the node if it exist
-		if (!this.node) {
+		// Avoid touching the DOM if the node already exist
+		if (this.node == null) {
 			this.create();
 		}
 
@@ -1206,8 +1225,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 			// ignore incompatible children
 			if (children.length === 1 && children[0]) {
-
-				node.appendChild(children[0].render(this));
+				insertChildAt(node, children[0]);
 			} else {
 
 				var index = 0,
@@ -1216,8 +1234,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				for (; index < length; index += 1) {
 					// ignore incompatible children
 					if (children[index]) {
-
-						node.appendChild(children[index].render(this));
+						insertChildAt(node, children[index]);
 					}
 				}
 			}
@@ -1294,25 +1311,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	/**
-  * Inserts `childNode` as a child of `parentNode` at the `index`.
-  *
-  * @param {DOMElement} parentNode Parent node in which to insert.
-  * @param {Object} childNode Child node to insert.
-  * @param {number} index Index at which to insert the child.
-  */
-	var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
-		// Create the childNode node to get a real DOM node we can use for injection
-		childNode.create();
-		// By exploiting arrays returning `undefined` for an undefined index, we can
-		// rely exclusively on `insertBefore(node, null)` instead of also using
-		// `appendChild(node)`. However, using `undefined` is not allowed by all
-		// browsers so we must replace it with `null`.
-		parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
-		// render the node and it's children after injection to the DOM
-		childNode.render();
-	};
-
-	/**
   * Removes one or more virtual nodes attached to a real DOM node
   *
   * @param {Array} nodes
@@ -1346,7 +1344,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			/**
     * Both 'oldChildren' and 'children' are single children
     */
-
 			if (firstChildLength === 1 && childrenLength === 1) {
 
 				if (firstChild.equalTo(lastChild)) {
@@ -1582,7 +1579,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 		}
-
 	};
 
 	var patchAttributes = function patchAttributes(node, attrs, previousAttr) {
@@ -2497,7 +2493,6 @@ function Benchmark() {
 
   this._runButton.addEventListener('click', function(e) {
     e.preventDefault();
-
 
     if (!self.running) {
       var iterations = parseInt(self._iterationsElement.value);
