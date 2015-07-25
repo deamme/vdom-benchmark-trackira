@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.7
+ * @Version: v0.1.8b
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -209,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} to
      * @return {boolean}
      */
+
     Text.prototype.equalTo = function (node) {
         return this.flag === node.flag;
     };
@@ -323,17 +324,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         return value instanceof Array;
     };
 
-    var normalize = function normalize(nodes) {
+    var processChildren = function processChildren(children) {
 
-        if (typeof nodes === "function") {
-            nodes = nodes(nodes);
+        if (typeof children === "function") {
+            children = [children(children)];
+        } else if (!isArray(children)) {
+            children = [children];
         }
 
-        if (!isArray(nodes)) {
-            nodes = [nodes];
-        }
-
-        return nodes;
+        return children;
     };
 
     var append = function append(node, children, parent) {
@@ -346,8 +345,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
 
         if (node) {
-            // normalize the children
-            children = normalize(children, parent);
+            // normalize child nodes
+            children = processChildren(children, parent);
 
             var i = 0,
                 j = 0,
@@ -510,6 +509,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
     // those special cased tags
+
 
     var selfClosing = {
         "area": 1,
@@ -1208,8 +1208,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                 var index = 0,
                     length = children.length;
-                for (; index < length; index += 1) {
 
+                for (; index < length; index += 1) {
+                    // ignore incompatible children
                     if (children[index]) {
 
                         node.appendChild(children[index].render(this));
@@ -1273,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param  {Number} endIndex 
      * @return {Object} A mapping of keys to the children of the virtual node.
      */
-    var keyMapping = function keyMapping(children, startIndex, endIndex) {
+    var buildKeys = function buildKeys(children, startIndex, endIndex) {
 
         var child,
             keys = {};
@@ -1296,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var detach = function detach(nodes) {
         var index = 0,
             length = nodes.length;
-        for (; index < length; index += 1) {
+        for (; index < length; index += 1 | 0) {
 
             nodes[index].detach();
         }
@@ -1304,20 +1305,24 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var patch = function patch(container, oldChildren, children) {
 
-        if (children.length == null || children.length === 0) {
+        /**
+         * The new children array are empty - detach all children in the old array.
+        */
+        if (children.length < 1) {
             detach(oldChildren);
         } else {
 
             var firstChild = oldChildren[0],
                 lastChild = children[0],
-                updated = false,
+                firstChildLength = oldChildren.length,
+                childrenLength = children.length,
                 index = 0,
                 length;
 
             /**
-             * Both 'oldChildren' and 'children' are a lonely child
+             * Both 'oldChildren' and 'children' are lonely
              */
-            if (oldChildren.length === 1 && children.length === 1) {
+            if (firstChildLength === 1 && childrenLength === 1) {
 
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
@@ -1327,11 +1332,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 }
 
                 /**
-                 * 'oldChildren' is a single child
+                 * 'oldChildren' is a single child node
                  */
-            } else if (oldChildren.length === 1) {
+            } else if (firstChildLength === 1) {
 
-                    for (index = 0, length = children.length; index < length; index += 1) {
+                    for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
 
                         lastChild = children[index];
 
@@ -1342,29 +1347,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     }
 
                     /**
-                     * 'children' is a single child
+                     * 'children' is a single child node
                      */
-                } else if (children.length === 1) {
+                } else if (childrenLength === 1) {
 
-                        for (index = 0, length = oldChildren.length; index < length; index += 1) {
+                        for (index = 0, length = firstChildLength; index < length; index += 1 | 0) {
 
                             firstChild = oldChildren[index];
 
-                            if (firstChild.equalTo(lastChild)) {
-                                firstChild.patch(lastChild);
-                                updated = true;
-                            } else {
+                            if (!firstChild.equalTo(lastChild)) {
                                 // Detach the node
                                 firstChild.detach();
                             }
-                        }
-
-                        if (updated) {
-                            for (length = oldChildren.length; index < length; index += 1) {
-                                oldChildren[index++].detach();
-                            }
-                        } else {
-                            container.appendChild(lastChild.render());
                         }
                     } else {
 
@@ -1415,7 +1409,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                             } else {
 
                                                 if (map === undefined) {
-                                                    map = keyMapping(oldChildren, oldStartIndex, oldEndIndex);
+                                                    map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
                                                 }
 
                                                 index = map[startNode.key];
@@ -1820,65 +1814,72 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_mount = function prototype_mount(selector, factory, data) {
 
-        return this.apply(selector, factory, data, function (root, nodes) {
+        return this.glue(selector, factory, data, function (root, children) {
 
-            // Normalize the nodes
-            nodes = normalize(nodes);
+            /**
+             * Normalize the child nodes
+             */
+            children = processChildren(children);
 
-            // Render children
-            if (nodes.length) {
+            /**
+             * Render child nodes and attach to the root node
+             */
+            if (children.length) {
 
-                if (nodes.length === 1 && nodes[0]) {
+                if (children.length === 1 && children[0]) {
 
-                    root.appendChild(nodes[0].render());
+                    root.appendChild(children[0].render());
                 } else {
 
-                    var i = 0,
-                        len = nodes.length;
-                    for (; i < len; i++) {
-                        // ignore incompatible children
-                        if (nodes[i]) {
+                    var index = 0,
+                        length = children.length;
+                    for (; index < length; index += 1) {
 
-                            root.appendChild(nodes[i].render());
+                        // ignore incompatible children
+                        if (children[index]) {
+
+                            root.appendChild(children[index].render());
                         }
                     }
                 }
             }
 
-            return nodes;
+            return children;
         });
     };
 
     var unmount = function unmount(uuid) {
+        var mountContainer = this.mountContainer;
 
         if (uuid != null) {
 
-            var mount = this.mountContainer[uuid];
+            var prevMounted = mountContainer[uuid];
 
-            // if mounted..
-            if (mount) {
+            // if previously mounted..
+            if (prevMounted) {
 
                 // Detach all children on the mounted virtual tree
-                detach(mount.children);
+                detach(prevMounted.children);
 
                 // setting 'undefined' gives better performance
-                mount.root.rootID = undefined;
+                prevMounted.root.rootID = undefined;
 
-                delete this.mountContainer[uuid];
+                delete mountContainer[uuid];
             }
         } else {
 
             // Remove the world. Unmount everything.
-            for (uuid in this.mountContainer) {
+            for (uuid in mountContainer) {
 
                 this.unmount(uuid);
             }
         }
     };
 
-    var updateChildren = function updateChildren(root, prevChildren, newChildren) {
+    var updateChildren = function updateChildren(node, prevChildren, newChildren) {
+        // skip patching if the children are equal
         if (prevChildren !== newChildren) {
-            return patch(root, prevChildren, normalize(newChildren));
+            return patch(node, prevChildren, processChildren(newChildren));
         }
     };
 
@@ -1908,7 +1909,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 var activeElement = document.activeElement;
 
                 if (!node) {
-                    node = mount.factory;
+                    node = mount.callback;
                 }
 
                 // update and re-order child nodes         
@@ -1953,8 +1954,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var apply = function apply(selector, factory, container, children) {
+    var glue = function glue(selector, callback, container, children) {
         if (container === undefined) container = {};
+        var mountContainer = this.mountContainer;
 
         // Find the selector where we are going to mount the virtual tree
         var root = findDOMNode(selector),
@@ -1962,9 +1964,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         if (root) {
 
+            var prevMounted = root.rootID || mountContainer[root];
+
             // Unmount if already mounted
-            if (root.rootID) {
-                this.unmount(root.rootID);
+            if (prevMounted) {
+                this.unmount(prevMounted);
             }
 
             // use 'container' id if it exist, or...
@@ -1976,8 +1980,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
 
             container.root = root;
-            container.factory = factory;
-            container.children = children(root, factory);
+            container.callback = callback;
+            container.children = children(root, callback);
 
             this.mountContainer[mountId] = container;
 
@@ -1989,7 +1993,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-        return this.apply(selector, factory, data, append);
+        return this.glue(selector, factory, data, append);
     };
 
     // Generate a unique identifier
@@ -2035,20 +2039,63 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var Tree = function Tree() {
-
+        /**
+         * Initialize the tree
+         */
         this.init();
     };
 
     Tree.prototype = {
+
+        /**
+         * Initialize
+         */
         init: prototype_init,
-        apply: apply,
+
+        /**
+         * "Glue" / attach virtual trees or server rendered HTML markup 
+         * to a given selector
+         */
+        glue: glue,
+
+        /**
+         * Append server rendered HTML markup
+         */
         append: Tree_prototype_append,
+
+        /**
+         * Mount a virtual tree
+         */
         mount: prototype_mount,
+
+        /**
+         * Unmount a virtual tree
+         */
         unmount: unmount,
+
+        /**
+         * Update a virtual tree
+         */
         update: update,
+
+        /**
+         * Return overview over mounted tree, or all mounted trees
+         */
         mounted: mounted,
+
+        /**
+         * Generate a unique identifier for mounting virtual trees
+         */
         guid: prototype_guid,
+
+        /**
+         * Returns all child nodes beloning to the mounted tree
+         */
         children: prototype_children,
+
+        /**
+         * Return a real DOM node where the virtual tree are mounted
+         */
         mountPoint: mountPoint
     };
 
@@ -2112,7 +2159,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} root
      * @param {String} evt
      */
-    var eventHandler = function eventHandler(root, evt) {
+    var globalEventListener = function globalEventListener(root, evt) {
 
         return function (e) {
 
@@ -2139,7 +2186,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var bind = function bind(evt, useCapture) {
 
-        var handler = eventHandler(this, evt);
+        var handler = globalEventListener(this, evt);
 
         // remove the event 'evt' if the event are bound already
         if (this.eventContainer[evt]) {
@@ -2165,7 +2212,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     var unbind = function unbind(type, useCapture) {
-
 
         if (arguments.length) {
 
@@ -2374,7 +2420,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.7"
+        version: "0.1.8b"
     };
 
     return trackira;
