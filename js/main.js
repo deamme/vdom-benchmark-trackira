@@ -491,21 +491,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
-     * Creates an Element.
-     * @return {!Element}
+     * Create root level element for the virtual node
      */
     var create = function create() {
         var namespace = this.namespace;
         var tagName = this.tagName;
         var typeExtension = this.typeExtension;
-        var doc = document;
 
-        if (typeExtension) {
-            this.node = namespace ? doc.createElementNS(namespace, tagName, typeExtension) : doc.createElement(tagName, typeExtension);
+        if (namespace) {
+
+            this.node = typeExtension ? document.createElementNS(namespace, tagName, typeExtension) : document.createElementNS(namespace, tagName);
         } else {
-            this.node = namespace ? doc.createElementNS(namespace, tagName) : doc.createElement(tagName);
+
+            this.node = typeExtension ? document.createElement(tagName, typeExtension) : document.createElement(tagName);
         }
-        return this.node;
     };
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
@@ -1140,57 +1139,38 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    /**
-     * Inserts `childNode` as a child of `parentNode` at the `index`.
-     *
-     * @param {DOMElement} parentNode Parent node in which to insert.
-     * @param {Object} childNode Child node to insert.
-     * @param {number} index Index at which to insert the child.
-     */
-    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
-        // Create the childNode node to get a real DOM node we can use for injection
-        childNode.create();
-        // By exploiting arrays returning `undefined` for an undefined index, we can
-        // rely exclusively on `insertBefore(node, null)` instead of also using
-        // `appendChild(node)`. However, using `undefined` is not allowed by all
-        // browsers so we must replace it with `null`.
-        parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
-        // render the node and it's children after injection to the DOM
-        childNode.render();
-    };
-
     var render = function render(parent) {
-        var namespace = this.namespace;
         var tagName = this.tagName;
         var children = this.children;
         var props = this.props;
         var attrs = this.attrs;
         var hooks = this.hooks;
 
-        this.parent = parent;
+        if (parent) {
+
+            this.parent = parent;
+        }
 
         // Set the namespace to create an element (of a given tag) in.
-        if (namespace == null) {
+        if (this.namespace == null) {
             switch (tagName) {
                 // Use SVG namespace, if this is an <svg> element
                 case "svg":
-                    namespace = "http://www.w3.org/2000/svg";
+                    this.namespace = "http://www.w3.org/2000/svg";
                     break;
                 // ...or MATH, if the parent is a <math> element
                 case "math":
-                    namespace = "http://www.w3.org/1998/Math/MathML";
+                    this.namespace = "http://www.w3.org/1998/Math/MathML";
                     break;
                 default:
                     // ...or inherit from the parent node
                     if (parent) {
-                        namespace = parent.namespace;
+                        this.namespace = parent.namespace;
                     }
             }
-
-            this.namespace = namespace;
         }
 
-        // Avoid touching the DOM if the node already exist
+        // Only create the root node if the internal node are set to 'null'
         if (this.node == null) {
             this.create();
         }
@@ -1225,10 +1205,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
         if (children.length) {
 
             // ignore incompatible children
-            if (children.length === 1 && children[0]) {
-                children[0].create();
-                node.appendChild(children[0].node);
-                children[0].render(this);
+            if (children.length === 1) {
+                if (children[0]) {
+
+                    children[0].create();
+
+                    node.appendChild(children[0].node);
+                }
             } else {
 
                 var index = 0,
@@ -1237,19 +1220,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 for (; index < length; index += 1) {
                     // ignore incompatible children
                     if (children[index]) {
-                        var s = children[index];
 
-                        s.create();
-                        node.appendChild(s.node);
-                        s.render(this);
+                        node.appendChild(children[index].render(this));
                     }
                 }
             }
         }
 
         /**
-         * Note! Only attach the reference for the virtual node if the DOM element 
-         * has defined events to minimize overhead.
+         * To minimize overhead, only attach the reference for the virtual node if the DOM element 
+         * has defined events.
          */
         if (this.events) {
 
@@ -1263,6 +1243,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 hooks.created(this, node);
             }
         }
+
         return node;
     };
 
@@ -1315,6 +1296,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         return keys;
+    };
+
+    /**
+     * Inserts `childNode` as a child of `parentNode` at the `index`.
+     *
+     * @param {DOMElement} parentNode Parent node in which to insert.
+     * @param {Object} childNode Child node to insert.
+     * @param {number} index Index at which to insert the child.
+     */
+    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
+        // Create the childNode node to get a real DOM node we can use for injection
+        childNode.create();
+        // By exploiting arrays returning `undefined` for an undefined index, we can
+        // rely exclusively on `insertBefore(node, null)` instead of also using
+        // `appendChild(node)`. However, using `undefined` is not allowed by all
+        // browsers so we must replace it with `null`.
+        parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+        // render the node and it's children after injection to the DOM
+        childNode.render();
     };
 
     /**
