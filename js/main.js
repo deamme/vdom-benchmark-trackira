@@ -41,12 +41,9 @@ BenchmarkImpl.prototype.tearDown = function() {
 };
 
 BenchmarkImpl.prototype.render = function() {
-  var bilat = new Element("div", {}, renderTree(this.a));
-  bilat.create();
-  this.container.appendChild(bilat.node);
-  
-  bilat.render();
-  this._node = bilat;
+  this._node = new Element("div", {}, renderTree(this.a));
+  this._root = this._node.render();
+  this.container.appendChild(this._root);
 };
 
 BenchmarkImpl.prototype.update = function() {
@@ -2116,6 +2113,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		/**
    * "Glue" / attach virtual trees or server rendered HTML markup 
+
    * to a given selector
    */
 		glue: glue,
