@@ -1345,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			    length;
 
 			/**
-    * Both 'oldChildren' and 'children' are lonely
+    * Both 'oldChildren' and 'children' are single children
     */
 			if (firstChildLength === 1 && childrenLength === 1) {
 
@@ -1434,22 +1434,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								} else if (oldEndNode.equalTo(endNode)) {
 										oldEndNode.patch(endNode);
 										oldEndIndex--;
+
 										endIndex--;
 										// Move nodes from left to right.
 									} else if (oldStartNode.equalTo(endNode)) {
-											oldStartNode.patch(endNode);
-
+											oldStartNode.patch(endNode, container);
 											container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
-
 											oldStartIndex++;
-
 											endIndex--;
 
 											// Move nodes from right to left.	
 										} else if (oldEndNode.equalTo(startNode)) {
 
 												oldEndNode.patch(startNode);
+
 												container.insertBefore(oldEndNode.node, oldStartNode.node);
+
 												oldEndIndex--;
 												StartIndex++;
 											} else {
@@ -1464,12 +1464,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 													node = oldChildren[index];
 													oldChildren[index] = undefined;
+
 													node.patch(startNode);
+
 													container.insertBefore(node.node, oldStartNode.node);
 												} else {
 													// create a new element
 
-													container.insertBefore(startNode.render(), oldStartNode.node);
+													appendChild(container, startNode, oldStartNode);
 												}
 
 												StartIndex++;
@@ -1483,9 +1485,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 							for (; StartIndex <= endIndex; StartIndex++) {
 								if (children[endIndex + 1] === undefined) {
-									container.appendChild(children[StartIndex].render());
+									appendChild(container, children[StartIndex], null);
 								} else {
-									container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
+									appendChild(container, children[StartIndex], children[endIndex + 1]);
 								}
 							}
 						} else if (StartIndex > endIndex) {
@@ -1641,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 	};
 
-	var prototype_patch = function prototype_patch(ref) {
+	var prototype_patch = function prototype_patch(ref, context) {
 
 		if (!this.equalTo(ref)) {
 
@@ -1649,30 +1651,26 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 
 		var node = this.node;
-
-		// Special case - select
 		var tagName = this.tagName;
 		var props = this.props;
 		var attrs = this.attrs;
 		var children = this.children;
 		var events = this.events;
 		var hooks = this.hooks;
-		if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-			renderSelect(ref);
-		}
 
 		ref.node = this.node;
 
-		// Patch / diff children
-		if (children !== ref.children) {
-			patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
+		// Special case - select
+		if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
+
+			renderSelect(ref);
 		}
 
 		// Patch / diff properties
 		if (props !== ref.props) {
 			patchProperties(node, ref.props, props);
 		}
+
 		// Patch / diff attributes
 		if (attrs !== ref.attrs) {
 			patchAttributes(node, ref.attrs, attrs);
@@ -1693,6 +1691,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			if (hooks.updated) {
 				hooks.updated(this, node);
 			}
+		}
+
+		// Patch / diff children
+		if (children !== ref.children) {
+			patch(context || node.shadowRoot ? node.shadowRoot : node, children, ref.children);
 		}
 
 		return node;
@@ -1781,7 +1784,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * The attributes and their values.
    */
 		this.attrs = options.attrs || null;
-
 
 		/**
    * Events
