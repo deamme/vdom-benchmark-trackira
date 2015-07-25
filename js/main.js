@@ -209,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} to
      * @return {boolean}
      */
+
     Text.prototype.equalTo = function (node) {
         return this.flag === node.flag;
     };
@@ -323,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         return value instanceof Array;
     };
 
-    var normalizeChildren = function normalizeChildren(children) {
+    var processChildren = function processChildren(children) {
 
         if (typeof children === "function") {
             children = [children(children)];
@@ -345,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         if (node) {
             // normalize child nodes
-            children = normalizeChildren(children, parent);
+            children = processChildren(children, parent);
 
             var i = 0,
                 j = 0,
@@ -508,6 +509,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
     // those special cased tags
+
 
     var selfClosing = {
         "area": 1,
@@ -747,7 +749,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         step: true,
         style: true,
         tabIndex: true,
-
         target: true,
         title: true,
         type: true,
@@ -1273,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param  {Number} endIndex 
      * @return {Object} A mapping of keys to the children of the virtual node.
      */
-    var keyMapping = function keyMapping(children, startIndex, endIndex) {
+    var buildKeys = function buildKeys(children, startIndex, endIndex) {
 
         var child,
             keys = {};
@@ -1310,7 +1311,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             var firstChild = oldChildren[0],
                 lastChild = children[0],
-                updated = false,
                 index = 0,
                 length;
 
@@ -1350,21 +1350,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                             firstChild = oldChildren[index];
 
-                            if (firstChild.equalTo(lastChild)) {
-                                firstChild.patch(lastChild);
-                                updated = true;
-                            } else {
+                            if (!firstChild.equalTo(lastChild)) {
                                 // Detach the node
                                 firstChild.detach();
                             }
-                        }
-
-                        if (updated) {
-                            for (length = oldChildren.length; index < length; index += 1) {
-                                oldChildren[index++].detach();
-                            }
-                        } else {
-                            container.appendChild(lastChild.render());
                         }
                     } else {
 
@@ -1415,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                             } else {
 
                                                 if (map === undefined) {
-                                                    map = keyMapping(oldChildren, oldStartIndex, oldEndIndex);
+                                                    map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
                                                 }
 
                                                 index = map[startNode.key];
@@ -1820,71 +1809,72 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var prototype_mount = function prototype_mount(selector, factory, data) {
 
-        return this.glue(selector, factory, data, function (root, nodes) {
+        return this.glue(selector, factory, data, function (root, children) {
 
             /**
              * Normalize the child nodes
              */
-            nodes = normalizeChildren(nodes);
+            children = processChildren(children);
 
             /**
              * Render child nodes and attach to the root node
              */
-            if (nodes.length) {
+            if (children.length) {
 
-                if (nodes.length === 1 && nodes[0]) {
+                if (children.length === 1 && children[0]) {
 
-                    root.appendChild(nodes[0].render());
+                    root.appendChild(children[0].render());
                 } else {
 
                     var index = 0,
-                        length = nodes.length;
+                        length = children.length;
                     for (; index < length; index += 1) {
 
                         // ignore incompatible children
-                        if (nodes[index]) {
+                        if (children[index]) {
 
-                            root.appendChild(nodes[index].render());
+                            root.appendChild(children[index].render());
                         }
                     }
                 }
             }
 
-            return nodes;
+            return children;
         });
     };
 
     var unmount = function unmount(uuid) {
+        var mountContainer = this.mountContainer;
 
         if (uuid != null) {
 
-            var mount = this.mountContainer[uuid];
+            var prevMounted = mountContainer[uuid];
 
-            // if mounted..
-            if (mount) {
+            // if previously mounted..
+            if (prevMounted) {
 
                 // Detach all children on the mounted virtual tree
-                detach(mount.children);
+                detach(prevMounted.children);
 
                 // setting 'undefined' gives better performance
-                mount.root.rootID = undefined;
+                prevMounted.root.rootID = undefined;
 
-                delete this.mountContainer[uuid];
+                delete mountContainer[uuid];
             }
         } else {
 
             // Remove the world. Unmount everything.
-            for (uuid in this.mountContainer) {
+            for (uuid in mountContainer) {
 
                 this.unmount(uuid);
             }
         }
     };
 
-    var updateChildren = function updateChildren(root, prevChildren, newChildren) {
+    var updateChildren = function updateChildren(node, prevChildren, newChildren) {
+        // skip patching if the children are equal
         if (prevChildren !== newChildren) {
-            // Normalize the child nodes, and patch/diff the children
-            return patch(root, prevChildren, normalizeChildren(newChildren));
+            return patch(node, prevChildren, processChildren(newChildren));
         }
     };
 
@@ -1914,7 +1904,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 var activeElement = document.activeElement;
 
                 if (!node) {
-                    node = mount.factory;
+                    node = mount.callback;
                 }
 
                 // update and re-order child nodes         
@@ -1959,8 +1949,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, factory, container, children) {
+    var glue = function glue(selector, callback, container, children) {
         if (container === undefined) container = {};
+        var mountContainer = this.mountContainer;
 
         // Find the selector where we are going to mount the virtual tree
         var root = findDOMNode(selector),
@@ -1968,9 +1959,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         if (root) {
 
+            var prevMounted = root.rootID || mountContainer[root];
+
             // Unmount if already mounted
-            if (root.rootID) {
-                this.unmount(root.rootID);
+            if (prevMounted) {
+                this.unmount(prevMounted);
             }
 
             // use 'container' id if it exist, or...
@@ -1982,8 +1975,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
 
             container.root = root;
-            container.factory = factory;
-            container.children = children(root, factory);
+            container.callback = callback;
+            container.children = children(root, callback);
 
             this.mountContainer[mountId] = container;
 
@@ -2161,7 +2154,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} root
      * @param {String} evt
      */
-    var eventHandler = function eventHandler(root, evt) {
+    var globalEventListener = function globalEventListener(root, evt) {
 
         return function (e) {
 
@@ -2188,7 +2181,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var bind = function bind(evt, useCapture) {
 
-        var handler = eventHandler(this, evt);
+        var handler = globalEventListener(this, evt);
 
         // remove the event 'evt' if the event are bound already
         if (this.eventContainer[evt]) {
@@ -2407,6 +2400,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         /**
          * Append a virtual tree onto a previously rendered DOM tree.
+
          */
         append: append,
 
