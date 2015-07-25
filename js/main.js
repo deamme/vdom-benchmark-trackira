@@ -1294,23 +1294,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	/**
-  * Insert a child during patching / diffing
+  * Inserts `childNode` as a child of `parentNode` at the `index`.
   *
-  * @param {Object} container
-  * @param {Object} child
-  * @param {Object} context
+  * @param {DOMElement} parentNode Parent node in which to insert.
+  * @param {Object} childNode Child node to insert.
+  * @param {number} index Index at which to insert the child.
   */
-	var appendChild = function appendChild(container, child, context) {
-		// Create the node...
-		child.create();
-		// ... inject it
-		if (context != null) {
-			container.insertBefore(child.node, context.node);
-		} else {
-			container.appendChild(child.node);
-		}
-		// ... render it
-		child.render();
+	var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
+		// Create the childNode node to get a real DOM node we can use for injection
+		childNode.create();
+		// By exploiting arrays returning `undefined` for an undefined index, we can
+		// rely exclusively on `insertBefore(node, null)` instead of also using
+		// `appendChild(node)`. However, using `undefined` is not allowed by all
+		// browsers so we must replace it with `null`.
+		parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+		// render the node and it's children after injection to the DOM
+		childNode.render();
 	};
 
 	/**
@@ -1347,13 +1346,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			/**
     * Both 'oldChildren' and 'children' are single children
     */
+
 			if (firstChildLength === 1 && childrenLength === 1) {
 
 				if (firstChild.equalTo(lastChild)) {
 					firstChild.patch(lastChild);
 				} else {
 					firstChild.detach();
-					appendChild(container, lastChild, null);
+					insertChildAt(container, lastChild, null);
 				}
 
 				/**
@@ -1369,13 +1369,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 							firstChild.patch(lastChild);
 							updated = true;
 						} else {
-							appendChild(container, lastChild, firstChild);
+							insertChildAt(container, lastChild, firstChild);
 						}
 					}
 
 					if (updated) {
 						for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
-							appendChild(container, children[index], null);
+							insertChildAt(container, children[index], null);
 						}
 					} else {
 						firstChild.detach();
@@ -1404,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								oldChildren[index++].detach();
 							}
 						} else {
-							appendChild(container, lastChild);
+							insertChildAt(container, lastChild);
 						}
 					} else {
 
@@ -1434,7 +1434,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								} else if (oldEndNode.equalTo(endNode)) {
 										oldEndNode.patch(endNode);
 										oldEndIndex--;
-
 										endIndex--;
 										// Move nodes from left to right.
 									} else if (oldStartNode.equalTo(endNode)) {
@@ -1471,7 +1470,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 												} else {
 													// create a new element
 
-													appendChild(container, startNode, oldStartNode);
+													insertChildAt(container, startNode, oldStartNode);
 												}
 
 												StartIndex++;
@@ -1483,12 +1482,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						}
 						if (oldStartIndex > oldEndIndex) {
 
+							var pos = children[endIndex + 1] === undefined ? null : children[endIndex + 1];
+
 							for (; StartIndex <= endIndex; StartIndex++) {
-								if (children[endIndex + 1] === undefined) {
-									appendChild(container, children[StartIndex], null);
-								} else {
-									appendChild(container, children[StartIndex], children[endIndex + 1]);
-								}
+								insertChildAt(container, children[StartIndex], pos);
 							}
 						} else if (StartIndex > endIndex) {
 
@@ -1585,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				}
 			}
 		}
+
 	};
 
 	var patchAttributes = function patchAttributes(node, attrs, previousAttr) {
@@ -1833,12 +1831,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		this.flag = flags__ELEMENT;
 	};
 
-	var insertChild = function insertChild(node, nextRef, parent) {
-		node.create();
-		this.node.insertBefore(node.node, nextRef);
-		node.render(parent);
-	};
-
 	function Element(tagName, options, children) {
 
 		this.init(tagName, options, children);
@@ -1853,8 +1845,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		destroy: destroy,
 		detach: prototype_detach,
 		equalTo: equalTo,
-		init: init,
-		insertChild: insertChild
+		init: init
 	};
 
 	/** Export */
@@ -2506,6 +2497,7 @@ function Benchmark() {
 
   this._runButton.addEventListener('click', function(e) {
     e.preventDefault();
+
 
     if (!self.running) {
       var iterations = parseInt(self._iterationsElement.value);
