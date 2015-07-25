@@ -1295,6 +1295,26 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	/**
+  * Insert a child during patching / diffing
+  *
+  * @param {Object} container
+  * @param {Object} child
+  * @param {Object} context
+  */
+	var appendChild = function appendChild(container, child, context) {
+		// Create the node...
+		child.create();
+		// ... inject it
+		if (context != null) {
+			container.insertBefore(child.node, context.node);
+		} else {
+			container.appendChild(child.node);
+		}
+		// ... render it
+		child.render();
+	};
+
+	/**
   * Removes one or more virtual nodes attached to a real DOM node
   *
   * @param {Array} nodes
@@ -1333,7 +1353,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					firstChild.patch(lastChild);
 				} else {
 					firstChild.detach();
-					container.appendChild(lastChild.render());
+					appendChild(container, lastChild, null);
 				}
 
 				/**
@@ -1355,9 +1375,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								updated = true;
 								break;
 							}
-							bNode.create();
-							container.insertBefore(bNode.node, aNode.node);
-							bNode.render();
+							appendChild(container, bNode, aNode);
 						}
 					} else {
 						while (i < children.length) {
@@ -1369,21 +1387,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 								break;
 							}
 
-							bNode.create();
-							container.insertBefore(bNode.node, aNode.node);
-							bNode.render();
+							appendChild(container, bNode, aNode);
 						}
 					}
 
 					if (updated) {
-						var deam;
-
 						while (i < children.length) {
-
-							deam = children[i++];
-							deam.create();
-							container.appendChild(deam.node);
-							deam.render();
+							appendChild(container, children[i++], null);
 						}
 					} else {
 						aNode.detach();
@@ -2248,7 +2258,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		return handler;
 	};
-
 
 	/**
   * Unbind an event `type`' to a callback function
