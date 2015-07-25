@@ -1157,37 +1157,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    /**
-     * Inserts `childNode` as a child of `parentNode` at the `index`.
-     *
-     * @param {DOMElement} parentNode Parent node in which to insert.
-     * @param {Object} childNode Child node to insert.
-     * @param {number} index Index at which to insert the child.
-     */
-    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
-        // Create the childNode node to get a real DOM node we can use for injection
-        childNode.create();
-        // By exploiting arrays returning `undefined` for an undefined index, we can
-        // rely exclusively on `insertBefore(node, null)` instead of also using
-        // `appendChild(node)`. However, using `undefined` is not allowed by all
-        // browsers so we must replace it with `null`.
-        parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
-        // render the node and it's children after injection to the DOM
-        childNode.render();
-    };
-
-    var render = function render(parent) {
+    var render = function render() {
         var tagName = this.tagName;
+
+        // Only create the root node if the internal node are set to 'null'
         var children = this.children;
         var props = this.props;
         var attrs = this.attrs;
         var hooks = this.hooks;
-
-        if (parent) {
-            this.parent = parent;
-        }
-
-        // Only create the root node if the internal node are set to 'null'
+        var events = this.events;
         if (this.node == null) {
             this.create();
         }
@@ -1222,20 +1200,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
         if (children.length) {
 
             // ignore incompatible children
-            if (children.length === 1) {
-                if (children[0]) {
-                    this.injectChildren(node, children[0], this);
-                }
-            } else {
+            if (children.length > 1) {
 
                 var index = 0,
-                    length = children.length;
-
-                for (; index < length; index += 1) {
+                    childrenLength = children.length;
+                for (; index < childrenLength; index++) {
                     // ignore incompatible children
                     if (children[index]) {
                         this.injectChildren(node, children[index], this);
                     }
+                }
+            } else if (children.length !== 0) {
+
+                if (children[0]) {
+                    this.injectChildren(node, children[0], this);
                 }
             }
         }
@@ -1244,13 +1222,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
          * To minimize overhead, only attach the reference for the virtual node if the DOM element 
          * has defined events.
          */
-        if (this.events) {
-
+        if (events) {
             node._handler = this;
         }
 
-        // Handle hooks
-
+        // Handle lifeCycle hooks
         if (hooks !== undefined) {
             if (hooks.created) {
                 hooks.created(this, node);
@@ -1309,6 +1285,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         return keys;
+    };
+
+    /**
+     * Inserts `childNode` as a child of `parentNode` at the `index`.
+     *
+     * @param {DOMElement} parentNode Parent node in which to insert.
+     * @param {Object} childNode Child node to insert.
+     * @param {number} index Index at which to insert the child.
+     */
+    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
+        // Create the childNode node to get a real DOM node we can use for injection
+        childNode.create();
+        // By exploiting arrays returning `undefined` for an undefined index, we can
+        // rely exclusively on `insertBefore(node, null)` instead of also using
+        // `appendChild(node)`. However, using `undefined` is not allowed by all
+        // browsers so we must replace it with `null`.
+        parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+        // render the node and it's children after injection to the DOM
+        childNode.render();
     };
 
     /**
@@ -1558,6 +1553,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      */
     var patchStyles = function patchStyles(node, key, value, prevStyle) {
 
+
         if (typeof value === "object") {
 
             if (typeof prevStyle === "object") {
@@ -1795,11 +1791,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
          * created or patched. 
          */
         this.node = null;
-
-        /**
-         * Reference to the parent node - a DOM element used for W3C DOM API calls
-         */
-        this.parent = undefined;
 
         /**
          * Add data 
