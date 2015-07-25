@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8b
+ * @Version: v0.1.8c
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -1207,19 +1207,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // Render children
         if (children.length) {
 
-            // ignore incompatible children
             if (children.length > 1) {
 
                 var index = 0,
                     childrenLength = children.length;
                 for (; index < childrenLength; index++) {
-                    // ignore incompatible children
                     if (children[index]) {
                         this.injectChildren(node, children[index], this);
                     }
                 }
             } else if (children.length !== 0) {
-
                 if (children[0]) {
                     this.injectChildren(node, children[0], this);
                 }
@@ -1296,21 +1293,21 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
-     * Inserts `childNode` as a child of `parentNode` at the `index`.
+     * Inserts `childNode` before 'nextChild`.
      *
-     * @param {DOMElement} parentNode Parent node in which to insert.
+     * @param {DOMElement} container Real DOM node in which to insert.
      * @param {Object} childNode Child node to insert.
-     * @param {number} index Index at which to insert the child.
+     * @param {Object} nextChild.
      */
-    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild) {
+    var insertChildAt = function insertChildAt(container, childNode, nextChild) {
         // Create the childNode node to get a real DOM node we can use for injection
         childNode.create();
         // By exploiting arrays returning `undefined` for an undefined index, we can
         // rely exclusively on `insertBefore(node, null)` instead of also using
         // `appendChild(node)`. However, using `undefined` is not allowed by all
         // browsers so we must replace it with `null`.
-        parentNode.insertBefore(childNode.node, nextChild ? nextChild.node : null);
-        // render the node and it's children after injection to the DOM
+        container.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+        // render the virtual node and it's children after injection to the DOM
         childNode.render();
     };
 
@@ -2132,7 +2129,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
         update: update,
 
-
         /**
          * Return overview over mounted tree, or all mounted trees
          */
@@ -2475,7 +2471,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8b"
+        version: "0.1.8c"
     };
 
     return trackira;
@@ -2683,6 +2679,7 @@ function initFromParentWindow(parent, name, version, id) {
 
       parent.postMessage({
         type: 'ready',
+
         data: null,
         id: id
       }, '*');
