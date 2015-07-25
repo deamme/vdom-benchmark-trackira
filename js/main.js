@@ -1140,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var render = function render(parent) {
+    var render = function render(parent, reorder) {
         var tagName = this.tagName;
         var children = this.children;
         var props = this.props;
@@ -1174,11 +1174,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // create a new virtual element
         var node = this.node = this.create();
 
+
         /**
          * Note! We are checking for 'null' for 'attrs' and 'props'
          * twice because of performance optimizing
          */
-        if (props != null || attrs != null) {
+        if (!reorder && (props != null || attrs != null)) {
 
             // Special case - select
             if (tagName === "select") {
@@ -1230,7 +1231,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         // Handle hooks
 
-        if (hooks !== undefined) {
+        if (!reorder && hooks !== undefined) {
             if (hooks.created) {
                 hooks.created(this, node);
             }
@@ -1323,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     firstChild.patch(lastChild);
                 } else {
                     firstChild.detach();
-                    container.appendChild(lastChild.render());
+                    container.appendChild(lastChild.render(null, true));
                 }
 
                 /**
@@ -1338,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         if (firstChild.equalTo(lastChild)) {
                             firstChild.patch(lastChild);
                         }
-                        container.insertBefore(lastChild.render(), firstChild.node);
+                        container.insertBefore(lastChild.render(null, true), firstChild.node);
                     }
 
                     /**
@@ -1418,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                 } else {
                                                     // create a new element
 
-                                                    container.insertBefore(startNode.render(), oldStartNode.node);
+                                                    container.insertBefore(startNode.render(null, true), oldStartNode.node);
                                                 }
 
                                                 StartIndex++;
@@ -1432,9 +1433,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                             for (; StartIndex <= endIndex; StartIndex++) {
                                 if (children[endIndex + 1] === undefined) {
-                                    container.appendChild(children[StartIndex].render());
+                                    container.appendChild(children[StartIndex].render(null, true));
                                 } else {
-                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
+                                    container.insertBefore(children[StartIndex].render(null, true), children[endIndex + 1].node);
                                 }
                             }
                         } else if (StartIndex > endIndex) {
@@ -2400,7 +2401,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         /**
          * Append a virtual tree onto a previously rendered DOM tree.
-
          */
         append: append,
 
