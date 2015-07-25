@@ -389,7 +389,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						}
 					j++;
 				}
-				//	console.log(children)
 				return children;
 			}
 		}
@@ -1364,7 +1363,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 					for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
 
-
 						lastChild = children[index];
 
 						if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key === lastChild.key) {
@@ -1388,14 +1386,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
 				} else if (childrenLength === 1) {
 
-						for (index = 0, length = firstChildLength; index < length; index += 1 | 0) {
+						for (index = 0, length = oldChildren.length; index < length; index += 1 | 0) {
 
 							firstChild = oldChildren[index];
 
-							if (!firstChild.equalTo(lastChild)) {
+							if (firstChild.equalTo(lastChild)) {
+								firstChild.patch(lastChild);
+								updated = true;
+							} else {
 								// Detach the node
 								firstChild.detach();
 							}
+						}
+
+						if (updated) {
+							for (length = oldChildren.length; index < length; index += 1 | 0) {
+								oldChildren[index++].detach();
+							}
+						} else {
+							appendChild(container, lastChild);
 						}
 					} else {
 
@@ -1598,7 +1607,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						} else {
 							node.removeAttribute(attrName);
 						}
-
 				}
 			}
 
@@ -1773,6 +1781,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * The attributes and their values.
    */
 		this.attrs = options.attrs || null;
+
 
 		/**
    * Events
@@ -1972,7 +1981,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-
 	var mounted = function mounted(uuid) {
 
 		return uuid != null ? this.mountContainer[uuid] : this.mountContainer;
@@ -2050,7 +2058,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var guid = function guid() {
 		return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, uuidFunc);
 	};
-
 
 	var prototype_guid = function prototype_guid() {
 
