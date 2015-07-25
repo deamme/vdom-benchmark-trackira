@@ -1331,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		/**
    * The new children array are empty - detach all children in the old array.
-  */
+   */
 		if (children.length < 1) {
 
 			detach(oldChildren);
@@ -1342,6 +1342,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			    firstChildLength = oldChildren.length,
 			    childrenLength = children.length,
 			    index = 0,
+			    updated = false,
 			    length;
 
 			/**
@@ -1361,42 +1362,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
      */
 			} else if (firstChildLength === 1) {
 
-					// Fast path when a have 1 child.
-					var aNode = oldChildren[0];
-					var bNode;
-					var updated = false;
-					var i = 0;
+					for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
 
-					if (aNode.key == null) {
-						while (i < children.length) {
-							bNode = children[i++];
-							if (aNode.equalTo(bNode)) {
-								aNode.patch(bNode);
-								updated = true;
-								break;
-							}
-							appendChild(container, bNode, aNode);
-						}
-					} else {
-						while (i < children.length) {
-							bNode = children[i++];
 
-							if (aNode.key === bNode.key) {
-								aNode.patch(bNode);
-								updated = true;
-								break;
-							}
+						lastChild = children[index];
 
-							appendChild(container, bNode, aNode);
+						if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key === lastChild.key) {
+							firstChild.patch(lastChild);
+							updated = true;
+						} else {
+							appendChild(container, lastChild, firstChild);
 						}
 					}
 
 					if (updated) {
-						while (i < children.length) {
-							appendChild(container, children[i++], null);
+						for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
+							appendChild(container, children[index], null);
 						}
 					} else {
-						aNode.detach();
+						firstChild.detach();
 					}
 
 					/**
@@ -1614,6 +1598,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						} else {
 							node.removeAttribute(attrName);
 						}
+
 				}
 			}
 
@@ -1987,6 +1972,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+
 	var mounted = function mounted(uuid) {
 
 		return uuid != null ? this.mountContainer[uuid] : this.mountContainer;
@@ -2064,6 +2050,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var guid = function guid() {
 		return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, uuidFunc);
 	};
+
 
 	var prototype_guid = function prototype_guid() {
 
