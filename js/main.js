@@ -1160,7 +1160,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var render = function render() {
         var tagName = this.tagName;
 
-        // Only create the root node if the internal node are set to 'null'
+        /**
+         * Internet Explorer craziness. For the child nodes we need to
+         * create and inject the element BEFORE we render it's content.
+         * In that way, we will get a "normal" performance in IE.
+         *
+         * So this litle 'check' will help us run the 'render()' 
+         * method without creating any DOM element if the internal 
+         * node are not defined as 'null'.
+         */
+
         var children = this.children;
         var props = this.props;
         var attrs = this.attrs;
@@ -1170,30 +1179,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
             this.create();
         }
 
-        // create a new virtual element
         var node = this.node;
 
-        /**
-         * Note! We are checking for 'null' for 'attrs' and 'props'
-         * twice because of performance optimizing
-         */
-        if (props != null || attrs != null) {
+        // Special case - select
+        if (tagName === "select") {
 
-            // Special case - select
-            if (tagName === "select") {
+            renderSelect(this);
+        }
 
-                renderSelect(this);
-            }
+        // Render properties
+        if (props != null) {
+            renderProperties(node, props);
+        }
 
-            // Render properties
-            if (props != null) {
-                renderProperties(node, props);
-            }
-
-            // Render attributes
-            if (attrs != null) {
-                renderAttributes(node, attrs);
-            }
+        // Render attributes
+        if (attrs != null) {
+            renderAttributes(node, attrs);
         }
 
         // Render children
@@ -1553,7 +1554,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
      */
     var patchStyles = function patchStyles(node, key, value, prevStyle) {
 
-
         if (typeof value === "object") {
 
             if (typeof prevStyle === "object") {
@@ -1819,6 +1819,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.flag = flags__ELEMENT;
     };
 
+    /**
+     * To get a 'normal' average performance in Internet Explorer,
+     * we need to create, and inject the children BEFORE we
+     * render it's content
+     *
+     * @param {!Element} node Real DOM node
+     * @param {Object} child virtual node object
+     * @param {Object} parent where we inherit the namespace from
+     */
     var injectChildren = function injectChildren(node, child, parent) {
 
         child.create(parent);
@@ -2682,6 +2691,7 @@ function initFromParentWindow(parent, name, version, id) {
     id: id
   }, '*');
 }
+
 
 function init(name, version, impl) {
   // Parse Query String.
