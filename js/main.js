@@ -1140,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var render = function render(parent, reorder) {
+    var render = function render(parent) {
         var tagName = this.tagName;
         var children = this.children;
         var props = this.props;
@@ -1174,12 +1174,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // create a new virtual element
         var node = this.node = this.create();
 
-
         /**
          * Note! We are checking for 'null' for 'attrs' and 'props'
          * twice because of performance optimizing
          */
-        if (!reorder && (props != null || attrs != null)) {
+        if (props != null || attrs != null) {
 
             // Special case - select
             if (tagName === "select") {
@@ -1231,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
         // Handle hooks
 
-        if (!reorder && hooks !== undefined) {
+        if (hooks !== undefined) {
             if (hooks.created) {
                 hooks.created(this, node);
             }
@@ -1312,42 +1311,45 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
             var firstChild = oldChildren[0],
                 lastChild = children[0],
+                firstChildLength = oldChildren.length,
+                childrenLength = children.length,
                 index = 0,
                 length;
 
             /**
-             * Both 'oldChildren' and 'children' are a lonely child
+             * Both 'oldChildren' and 'children' are a single child
              */
-            if (oldChildren.length === 1 && children.length === 1) {
+            if (firstChildLength === 1 && childrenLength === 1) {
 
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
+
                     firstChild.detach();
-                    container.appendChild(lastChild.render(null, true));
+                    container.appendChild(lastChild.render());
                 }
 
                 /**
                  * 'oldChildren' is a single child
                  */
-            } else if (oldChildren.length === 1) {
+            } else if (firstChildLength === 1) {
 
-                    for (index = 0, length = children.length; index < length; index += 1) {
+                    for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
 
                         lastChild = children[index];
 
                         if (firstChild.equalTo(lastChild)) {
                             firstChild.patch(lastChild);
                         }
-                        container.insertBefore(lastChild.render(null, true), firstChild.node);
+                        container.insertBefore(lastChild.render(), firstChild.node);
                     }
 
                     /**
                      * 'children' is a single child
                      */
-                } else if (children.length === 1) {
+                } else if (childrenLength === 1) {
 
-                        for (index = 0, length = oldChildren.length; index < length; index += 1) {
+                        for (index = 0, length = firstChildLength; index < length; index += 1 | 0) {
 
                             firstChild = oldChildren[index];
 
@@ -1419,7 +1421,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                 } else {
                                                     // create a new element
 
-                                                    container.insertBefore(startNode.render(null, true), oldStartNode.node);
+                                                    container.insertBefore(startNode.render(), oldStartNode.node);
                                                 }
 
                                                 StartIndex++;
@@ -1433,9 +1435,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                             for (; StartIndex <= endIndex; StartIndex++) {
                                 if (children[endIndex + 1] === undefined) {
-                                    container.appendChild(children[StartIndex].render(null, true));
+                                    container.appendChild(children[StartIndex].render());
                                 } else {
-                                    container.insertBefore(children[StartIndex].render(null, true), children[endIndex + 1].node);
+                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
                                 }
                             }
                         } else if (StartIndex > endIndex) {
