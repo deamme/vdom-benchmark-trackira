@@ -1297,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var detach = function detach(nodes) {
         var index = 0,
             length = nodes.length;
-        for (; index < length; index += 1) {
+        for (; index < length; index += 1 | 0) {
 
             nodes[index].detach();
         }
@@ -1305,7 +1305,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     var patch = function patch(container, oldChildren, children) {
 
-        if (children.length == null || children.length === 0) {
+        /**
+         * The new children array are empty - detach all children in the old array.
+        */
+        if (children.length < 1) {
             detach(oldChildren);
         } else {
 
@@ -1317,20 +1320,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 length;
 
             /**
-             * Both 'oldChildren' and 'children' are a single child
+             * Both 'oldChildren' and 'children' are lonely
              */
             if (firstChildLength === 1 && childrenLength === 1) {
 
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
-
                     firstChild.detach();
                     container.appendChild(lastChild.render());
                 }
 
                 /**
-                 * 'oldChildren' is a single child
+                 * 'oldChildren' is a single child node
                  */
             } else if (firstChildLength === 1) {
 
@@ -1345,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                     }
 
                     /**
-                     * 'children' is a single child
+                     * 'children' is a single child node
                      */
                 } else if (childrenLength === 1) {
 
