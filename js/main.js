@@ -2,7 +2,7 @@
 var benchmark = require('vdom-benchmark-base');
 var Conut = require('trackiraa');
 
-console.log(Conut);
+
 
 var NAME = 'Conut';
 var VERSION = "0.1";
