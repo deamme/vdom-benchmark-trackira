@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8b
+ * @Version: v0.1.8c
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -491,25 +491,42 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
-     * Creates an Element.
-     * @return {!Element}
+     * Create root level element for the virtual node
      */
-    var create = function create() {
-        var namespace = this.namespace;
+    var create = function create(parent) {
         var tagName = this.tagName;
-        var typeExtension = this.typeExtension;
-        var doc = document;
 
-        if (typeExtension) {
-            return namespace ? doc.createElementNS(namespace, tagName, typeExtension) : doc.createElement(tagName, typeExtension);
+        // Set the namespace to create an element (of a given tag) in.
+        var typeExtension = this.typeExtension;
+        if (this.namespace == null) {
+            switch (this.tagName) {
+                // Use SVG namespace, if this is an <svg> element
+                case "svg":
+                    this.namespace = "http://www.w3.org/2000/svg";
+                    break;
+                // ...or MATH, if the parent is a <math> element
+                case "math":
+                    this.namespace = "http://www.w3.org/1998/Math/MathML";
+                    break;
+                default:
+                    // ...or inherit from the parent node
+                    if (parent) {
+                        this.namespace = parent.namespace;
+                    }
+            }
+        }
+
+        if (this.namespace) {
+
+            this.node = typeExtension ? document.createElementNS(this.namespace, tagName, typeExtension) : document.createElementNS(this.namespace, tagName);
         } else {
-            return namespace ? doc.createElementNS(namespace, tagName) : doc.createElement(tagName);
+
+            this.node = typeExtension ? document.createElement(tagName, typeExtension) : document.createElement(tagName);
         }
     };
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
     // those special cased tags
-
 
     var selfClosing = {
         "area": 1,
@@ -1140,39 +1157,29 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var render = function render(parent) {
+    var render = function render() {
         var tagName = this.tagName;
+
+        /**
+         * Internet Explorer craziness. For the child nodes we need to
+         * create and inject the element BEFORE we render it's content.
+         * In that way, we will get a "normal" performance in IE.
+         *
+         * So this litle 'check' will help us run the 'render()' 
+         * method without creating any DOM element if the internal 
+         * node are not defined as 'null'.
+         */
+
         var children = this.children;
         var props = this.props;
         var attrs = this.attrs;
         var hooks = this.hooks;
-
-        if (parent) {
-
-            this.parent = parent;
+        var events = this.events;
+        if (this.node == null) {
+            this.create();
         }
 
-        // Set the namespace to create an element (of a given tag) in.
-        if (this.namespace == null) {
-            switch (tagName) {
-                // Use SVG namespace, if this is an <svg> element
-                case "svg":
-                    this.namespace = "http://www.w3.org/2000/svg";
-                    break;
-                // ...or MATH, if the parent is a <math> element
-                case "math":
-                    this.namespace = "http://www.w3.org/1998/Math/MathML";
-                    break;
-                default:
-                    // ...or inherit from the parent node
-                    if (parent) {
-                        this.namespace = parent.namespace;
-                    }
-            }
-        }
-
-        // create a new virtual element
-        var node = this.node = this.create();
+        var node = this.node;
 
         /**
          * Note! We are checking for 'null' for 'attrs' and 'props'
@@ -1200,41 +1207,37 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // Render children
         if (children.length) {
 
-            // ignore incompatible children
-            if (children.length === 1 && children[0]) {
-
-                node.appendChild(children[0].render(this));
-            } else {
+            if (children.length > 1) {
 
                 var index = 0,
-                    length = children.length;
-
-                for (; index < length; index += 1) {
-                    // ignore incompatible children
+                    childrenLength = children.length;
+                for (; index < childrenLength; index++) {
                     if (children[index]) {
-
-                        node.appendChild(children[index].render(this));
+                        this.injectChildren(node, children[index], this);
                     }
+                }
+            } else if (children.length !== 0) {
+                if (children[0]) {
+                    this.injectChildren(node, children[0], this);
                 }
             }
         }
 
         /**
-         * Note! Only attach the reference for the virtual node if the DOM element 
-         * has defined events to minimize overhead.
+         * To minimize overhead, only attach the reference for the virtual node if the DOM element 
+         * has defined events.
          */
-        if (this.events) {
-
+        if (events) {
             node._handler = this;
         }
 
-        // Handle hooks
-
+        // Handle lifeCycle hooks
         if (hooks !== undefined) {
             if (hooks.created) {
                 hooks.created(this, node);
             }
         }
+
         return node;
     };
 
@@ -1290,6 +1293,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
+     * Inserts `childNode` before 'nextChild`.
+     *
+     * @param {DOMElement} container Real DOM node in which to insert.
+     * @param {Object} childNode Child node to insert.
+     * @param {Object} nextChild.
+     */
+    var insertChildAt = function insertChildAt(container, childNode, nextChild) {
+        // Create the childNode node to get a real DOM node we can use for injection
+        childNode.create();
+        // By exploiting arrays returning `undefined` for an undefined index, we can
+        // rely exclusively on `insertBefore(node, null)` instead of also using
+        // `appendChild(node)`. However, using `undefined` is not allowed by all
+        // browsers so we must replace it with `null`.
+        container.insertBefore(childNode.node, nextChild ? nextChild.node : null);
+        // render the virtual node and it's children after injection to the DOM
+        childNode.render();
+    };
+
+    /**
      * Removes one or more virtual nodes attached to a real DOM node
      *
      * @param {Array} nodes
@@ -1297,57 +1319,72 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var detach = function detach(nodes) {
         var index = 0,
             length = nodes.length;
-        for (; index < length; index += 1) {
-
+        for (; index < length; index += 1 | 0) {
             nodes[index].detach();
         }
     };
 
     var patch = function patch(container, oldChildren, children) {
 
-        if (children.length == null || children.length === 0) {
+        /**
+         * The new children array are empty - detach all children in the old array.
+         */
+        if (children.length < 1) {
+
             detach(oldChildren);
         } else {
 
             var firstChild = oldChildren[0],
                 lastChild = children[0],
-                updated = false,
+                firstChildLength = oldChildren.length,
+                childrenLength = children.length,
                 index = 0,
+                updated = false,
                 length;
 
             /**
-             * Both 'oldChildren' and 'children' are a lonely child
+             * Both 'oldChildren' and 'children' are single children
              */
-            if (oldChildren.length === 1 && children.length === 1) {
+            if (firstChildLength === 1 && childrenLength === 1) {
 
                 if (firstChild.equalTo(lastChild)) {
                     firstChild.patch(lastChild);
                 } else {
                     firstChild.detach();
-                    container.appendChild(lastChild.render());
+                    insertChildAt(container, lastChild, null);
                 }
 
                 /**
-                 * 'oldChildren' is a single child
+                 * 'oldChildren' is a single child node
                  */
-            } else if (oldChildren.length === 1) {
+            } else if (firstChildLength === 1) {
 
-                    for (index = 0, length = children.length; index < length; index += 1) {
+                    for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
 
                         lastChild = children[index];
 
-                        if (firstChild.equalTo(lastChild)) {
+                        if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key === lastChild.key) {
                             firstChild.patch(lastChild);
+                            updated = true;
+                        } else {
+                            insertChildAt(container, lastChild, firstChild);
                         }
-                        container.insertBefore(lastChild.render(), firstChild.node);
+                    }
+
+                    if (updated) {
+                        for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
+                            insertChildAt(container, children[index], null);
+                        }
+                    } else {
+                        firstChild.detach();
                     }
 
                     /**
-                     * 'children' is a single child
+                     * 'children' is a single child node
                      */
-                } else if (children.length === 1) {
+                } else if (childrenLength === 1) {
 
-                        for (index = 0, length = oldChildren.length; index < length; index += 1) {
+                        for (index = 0, length = oldChildren.length; index < length; index += 1 | 0) {
 
                             firstChild = oldChildren[index];
 
@@ -1361,11 +1398,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         }
 
                         if (updated) {
-                            for (length = oldChildren.length; index < length; index += 1) {
+                            for (length = oldChildren.length; index < length; index += 1 | 0) {
                                 oldChildren[index++].detach();
                             }
                         } else {
-                            container.appendChild(lastChild.render());
+                            insertChildAt(container, lastChild);
                         }
                     } else {
 
@@ -1398,19 +1435,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                         endIndex--;
                                         // Move nodes from left to right.
                                     } else if (oldStartNode.equalTo(endNode)) {
-                                            oldStartNode.patch(endNode);
-
+                                            oldStartNode.patch(endNode, container);
                                             container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
-
                                             oldStartIndex++;
-
                                             endIndex--;
 
                                             // Move nodes from right to left.	
                                         } else if (oldEndNode.equalTo(startNode)) {
 
                                                 oldEndNode.patch(startNode);
+
                                                 container.insertBefore(oldEndNode.node, oldStartNode.node);
+
                                                 oldEndIndex--;
                                                 StartIndex++;
                                             } else {
@@ -1425,12 +1461,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
                                                     node = oldChildren[index];
                                                     oldChildren[index] = undefined;
+
                                                     node.patch(startNode);
+
                                                     container.insertBefore(node.node, oldStartNode.node);
                                                 } else {
                                                     // create a new element
 
-                                                    container.insertBefore(startNode.render(), oldStartNode.node);
+                                                    insertChildAt(container, startNode, oldStartNode);
                                                 }
 
                                                 StartIndex++;
@@ -1442,12 +1480,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
                         }
                         if (oldStartIndex > oldEndIndex) {
 
+                            var pos = children[endIndex + 1] === undefined ? null : children[endIndex + 1];
+
                             for (; StartIndex <= endIndex; StartIndex++) {
-                                if (children[endIndex + 1] === undefined) {
-                                    container.appendChild(children[StartIndex].render());
-                                } else {
-                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
-                                }
+                                insertChildAt(container, children[StartIndex], pos);
                             }
                         } else if (StartIndex > endIndex) {
 
@@ -1602,61 +1638,60 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
     };
 
-    var prototype_patch = function prototype_patch(ref) {
+    var prototype_patch = function prototype_patch(ref, context) {
 
-        if (!this.equalTo(ref)) {
+        if (this.equalTo(ref)) {
+            var node = this.node;
+            var tagName = this.tagName;
+            var props = this.props;
+            var attrs = this.attrs;
+            var children = this.children;
+            var events = this.events;
+            var hooks = this.hooks;
 
-            return ref.render(this.parent);
-        }
+            ref.node = this.node;
 
-        var node = this.node;
+            // Special case - select
+            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
 
-        // Special case - select
-        var tagName = this.tagName;
-        var props = this.props;
-        var attrs = this.attrs;
-        var children = this.children;
-        var events = this.events;
-        var hooks = this.hooks;
-        if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-            renderSelect(ref);
-        }
-
-        ref.node = this.node;
-
-        // Patch / diff children
-        if (children !== ref.children) {
-            patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-        }
-
-        // Patch / diff properties
-        if (props !== ref.props) {
-            patchProperties(node, ref.props, props);
-        }
-        // Patch / diff attributes
-        if (attrs !== ref.attrs) {
-            patchAttributes(node, ref.attrs, attrs);
-        }
-
-        if (events !== ref.events) {
-            // Handle events
-            if (ref.events) {
-
-                node._handler = ref;
-            } else if (events !== undefined) {
-
-                node._handler = undefined;
+                renderSelect(ref);
             }
-        }
-        // Handle hooks
-        if (hooks !== undefined) {
-            if (hooks.updated) {
-                hooks.updated(this, node);
-            }
-        }
 
-        return node;
+            // Patch / diff properties
+            if (props !== ref.props) {
+                patchProperties(node, ref.props, props);
+            }
+
+            // Patch / diff attributes
+            if (attrs !== ref.attrs) {
+                patchAttributes(node, ref.attrs, attrs);
+            }
+
+            if (events !== ref.events) {
+                // Handle events
+                if (ref.events) {
+
+                    node._handler = ref;
+                } else if (events !== undefined) {
+
+                    node._handler = undefined;
+                }
+            }
+            // Handle hooks
+            if (hooks !== undefined) {
+                if (hooks.updated) {
+                    hooks.updated(this, node);
+                }
+            }
+
+            // Patch / diff children
+            if (children !== ref.children) {
+                patch(context || node.shadowRoot ? node.shadowRoot : node, children, ref.children);
+            }
+
+            return node;
+        }
+        return ref.render();
     };
 
     /**
@@ -1716,7 +1751,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
     var equalTo = function equalTo(node) {
 
-        return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
+        return this.key === node.key && this.tagName === node.tagName && this.flag === node.flag && this.namespace === node.namespace && this.typeExtension === node.typeExtension;
     };
 
     var init = function init(tagName, options, children) {
@@ -1760,11 +1795,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.node = null;
 
         /**
-         * Reference to the parent node - a DOM element used for W3C DOM API calls
-         */
-        this.parent = null;
-
-        /**
          * Add data 
          */
         this.data = options.data;
@@ -1791,6 +1821,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.flag = flags__ELEMENT;
     };
 
+    /**
+     * To get a 'normal' average performance in Internet Explorer,
+     * we need to create, and inject the children BEFORE we
+     * render it's content
+     *
+     * @param {!Element} node Real DOM node
+     * @param {Object} child virtual node object
+     * @param {Object} parent where we inherit the namespace from
+     */
+    var injectChildren = function injectChildren(node, child, parent) {
+
+        child.create(parent);
+        this.node.appendChild(child.node);
+        child.render();
+    };
+
     function Element(tagName, options, children) {
 
         this.init(tagName, options, children);
@@ -1805,7 +1851,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
         destroy: destroy,
         detach: prototype_detach,
         equalTo: equalTo,
-        init: init
+        init: init,
+        injectChildren: injectChildren
     };
 
     /** Export */
@@ -1834,18 +1881,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
             if (children.length) {
 
                 if (children.length === 1 && children[0]) {
-
-                    root.appendChild(children[0].render());
+                    insertChildAt(root, children[0]);
                 } else {
 
                     var index = 0,
                         length = children.length;
                     for (; index < length; index += 1) {
-
                         // ignore incompatible children
                         if (children[index]) {
-
-                            root.appendChild(children[index].render());
+                            insertChildAt(root, children[index]);
                         }
                     }
                 }
@@ -1916,7 +1960,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 var activeElement = document.activeElement;
 
                 if (!node) {
-                    node = mount.factory;
+                    node = mount.callback;
                 }
 
                 // update and re-order child nodes         
@@ -1961,7 +2005,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, factory, container, children) {
+    var glue = function glue(selector, callback, container, children) {
         if (container === undefined) container = {};
         var mountContainer = this.mountContainer;
 
@@ -1987,8 +2031,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
 
             container.root = root;
-            container.factory = factory;
-            container.children = children(root, factory);
+            container.callback = callback;
+            container.children = children(root, callback);
 
             this.mountContainer[mountId] = container;
 
@@ -2427,7 +2471,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8b"
+        version: "0.1.8c"
     };
 
     return trackira;
@@ -2635,6 +2679,7 @@ function initFromParentWindow(parent, name, version, id) {
 
       parent.postMessage({
         type: 'ready',
+
         data: null,
         id: id
       }, '*');
