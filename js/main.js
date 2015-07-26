@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8c
+ * @Version: v0.1.8b
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -491,42 +491,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
-     * Create root level element for the virtual node
+     * Creates an Element.
+     * @return {!Element}
      */
-    var create = function create(parent) {
+    var create = function create() {
+        var namespace = this.namespace;
         var tagName = this.tagName;
-
-        // Set the namespace to create an element (of a given tag) in.
         var typeExtension = this.typeExtension;
-        if (this.namespace == null) {
-            switch (this.tagName) {
-                // Use SVG namespace, if this is an <svg> element
-                case "svg":
-                    this.namespace = "http://www.w3.org/2000/svg";
-                    break;
-                // ...or MATH, if the parent is a <math> element
-                case "math":
-                    this.namespace = "http://www.w3.org/1998/Math/MathML";
-                    break;
-                default:
-                    // ...or inherit from the parent node
-                    if (parent) {
-                        this.namespace = parent.namespace;
-                    }
-            }
-        }
+        var doc = document;
 
-        if (this.namespace) {
-
-            this.node = typeExtension ? document.createElementNS(this.namespace, tagName, typeExtension) : document.createElementNS(this.namespace, tagName);
+        if (typeExtension) {
+            return namespace ? doc.createElementNS(namespace, tagName, typeExtension) : doc.createElement(tagName, typeExtension);
         } else {
-
-            this.node = typeExtension ? document.createElement(tagName, typeExtension) : document.createElement(tagName);
+            return namespace ? doc.createElementNS(namespace, tagName) : doc.createElement(tagName);
         }
     };
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
     // those special cased tags
+
 
     var selfClosing = {
         "area": 1,
@@ -1157,29 +1140,39 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var render = function render() {
+    var render = function render(parent) {
         var tagName = this.tagName;
-
-        /**
-         * Internet Explorer craziness. For the child nodes we need to
-         * create and inject the element BEFORE we render it's content.
-         * In that way, we will get a "normal" performance in IE.
-         *
-         * So this litle 'check' will help us run the 'render()' 
-         * method without creating any DOM element if the internal 
-         * node are not defined as 'null'.
-         */
-
         var children = this.children;
         var props = this.props;
         var attrs = this.attrs;
         var hooks = this.hooks;
-        var events = this.events;
-        if (this.node == null) {
-            this.create();
+
+        if (parent) {
+
+            this.parent = parent;
         }
 
-        var node = this.node;
+        // Set the namespace to create an element (of a given tag) in.
+        if (this.namespace == null) {
+            switch (tagName) {
+                // Use SVG namespace, if this is an <svg> element
+                case "svg":
+                    this.namespace = "http://www.w3.org/2000/svg";
+                    break;
+                // ...or MATH, if the parent is a <math> element
+                case "math":
+                    this.namespace = "http://www.w3.org/1998/Math/MathML";
+                    break;
+                default:
+                    // ...or inherit from the parent node
+                    if (parent) {
+                        this.namespace = parent.namespace;
+                    }
+            }
+        }
+
+        // create a new virtual element
+        var node = this.node = this.create();
 
         /**
          * Note! We are checking for 'null' for 'attrs' and 'props'
@@ -1207,37 +1200,41 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // Render children
         if (children.length) {
 
-            if (children.length > 1) {
+            // ignore incompatible children
+            if (children.length === 1 && children[0]) {
+
+                node.appendChild(children[0].render(this));
+            } else {
 
                 var index = 0,
-                    childrenLength = children.length;
-                for (; index < childrenLength; index++) {
+                    length = children.length;
+
+                for (; index < length; index += 1) {
+                    // ignore incompatible children
                     if (children[index]) {
-                        this.injectChildren(node, children[index], this);
+
+                        node.appendChild(children[index].render(this));
                     }
-                }
-            } else if (children.length !== 0) {
-                if (children[0]) {
-                    this.injectChildren(node, children[0], this);
                 }
             }
         }
 
         /**
-         * To minimize overhead, only attach the reference for the virtual node if the DOM element 
-         * has defined events.
+         * Note! Only attach the reference for the virtual node if the DOM element 
+         * has defined events to minimize overhead.
          */
-        if (events) {
+        if (this.events) {
+
             node._handler = this;
         }
 
-        // Handle lifeCycle hooks
+        // Handle hooks
+
         if (hooks !== undefined) {
             if (hooks.created) {
                 hooks.created(this, node);
             }
         }
-
         return node;
     };
 
@@ -1293,25 +1290,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
-     * Inserts `childNode` before 'nextChild`.
-     *
-     * @param {DOMElement} container Real DOM node in which to insert.
-     * @param {Object} childNode Child node to insert.
-     * @param {Object} nextChild.
-     */
-    var insertChildAt = function insertChildAt(container, childNode, nextChild) {
-        // Create the childNode node to get a real DOM node we can use for injection
-        childNode.create();
-        // By exploiting arrays returning `undefined` for an undefined index, we can
-        // rely exclusively on `insertBefore(node, null)` instead of also using
-        // `appendChild(node)`. However, using `undefined` is not allowed by all
-        // browsers so we must replace it with `null`.
-        container.insertBefore(childNode.node, nextChild ? nextChild.node : null);
-        // render the virtual node and it's children after injection to the DOM
-        childNode.render();
-    };
-
-    /**
      * Removes one or more virtual nodes attached to a real DOM node
      *
      * @param {Array} nodes
@@ -1319,187 +1297,167 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var detach = function detach(nodes) {
         var index = 0,
             length = nodes.length;
-        for (; index < length; index += 1 | 0) {
+        for (; index < length; index += 1) {
+
             nodes[index].detach();
         }
     };
 
     var patch = function patch(container, oldChildren, children) {
 
-        if (oldChildren != null && oldChildren.length !== 0) {
+        if (children.length == null || children.length === 0) {
+            detach(oldChildren);
+        } else {
 
-            if (children == null || children.length === 0) {
+            var firstChild = oldChildren[0],
+                lastChild = children[0],
+                updated = false,
+                index = 0,
+                length;
 
-                detach(oldChildren);
-            } else {
+            /**
+             * Both 'oldChildren' and 'children' are a lonely child
+             */
+            if (oldChildren.length === 1 && children.length === 1) {
 
-                var firstChild = oldChildren[0],
-                    lastChild = children[0],
-                    firstChildLength = oldChildren.length,
-                    childrenLength = children.length,
-                    index = 0,
-                    updated = false,
-                    length;
+                if (firstChild.equalTo(lastChild)) {
+                    firstChild.patch(lastChild);
+                } else {
+                    firstChild.detach();
+                    container.appendChild(lastChild.render());
+                }
 
                 /**
-                 * Both 'oldChildren' and 'children' are single children
+                 * 'oldChildren' is a single child
                  */
-                if (firstChildLength === 1 && childrenLength === 1) {
+            } else if (oldChildren.length === 1) {
 
-                    // Implicit key with same type or explicit key with same key.
-                    if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key != null && firstChild.key === lastChild.key) {
-                        firstChild.patch(lastChild);
-                    } else {
-                        firstChild.destroy();
-                        insertChildAt(container, lastChild, null);
+                    for (index = 0, length = children.length; index < length; index += 1) {
+
+                        lastChild = children[index];
+
+                        if (firstChild.equalTo(lastChild)) {
+                            firstChild.patch(lastChild);
+                        }
+                        container.insertBefore(lastChild.render(), firstChild.node);
                     }
 
                     /**
-                     * 'oldChildren' is a single child node
+                     * 'children' is a single child
                      */
-                } else if (firstChildLength === 1) {
+                } else if (children.length === 1) {
 
-                        for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
+                        for (index = 0, length = oldChildren.length; index < length; index += 1) {
 
-                            lastChild = children[index];
+                            firstChild = oldChildren[index];
 
-                            if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key === lastChild.key) {
+                            if (firstChild.equalTo(lastChild)) {
                                 firstChild.patch(lastChild);
                                 updated = true;
-                                break;
-                            }
-
-                            insertChildAt(container, lastChild, firstChild);
-                        }
-
-                        if (updated) {
-                            for (index = 0, length = childrenLength; index < length; index += 1 | 0) {
-                                insertChildAt(container, children[index], null);
-                            }
-                        } else {
-                            firstChild.detach();
-                        }
-
-                        /**
-                         * 'children' is a single child node
-                         */
-                    } else if (childrenLength === 1) {
-
-                            while (index < oldChildren.length) {
-
-                                firstChild = oldChildren[index++];
-
-                                if (firstChild.equalTo(lastChild)) {
-                                    firstChild.patch(lastChild);
-                                    updated = true;
-                                    break;
-                                }
+                            } else {
                                 // Detach the node
                                 firstChild.detach();
                             }
+                        }
 
-                            if (updated) {
-                                while (index < oldChildren.length) {
-                                    oldChildren[index++].detach();
-                                }
-                            } else {
-                                insertChildAt(container, lastChild);
+                        if (updated) {
+                            for (length = oldChildren.length; index < length; index += 1) {
+                                oldChildren[index++].detach();
                             }
                         } else {
+                            container.appendChild(lastChild.render());
+                        }
+                    } else {
 
-                            var oldStartIndex = 0,
-                                StartIndex = 0,
-                                oldEndIndex = oldChildren.length - 1,
-                                oldStartNode = oldChildren[0],
-                                oldEndNode = oldChildren[oldEndIndex],
-                                endIndex = children.length - 1,
-                                startNode = children[0],
-                                endNode = children[endIndex],
-                                map,
-                                node;
+                        var oldStartIndex = 0,
+                            StartIndex = 0,
+                            oldEndIndex = oldChildren.length - 1,
+                            oldStartNode = oldChildren[0],
+                            oldEndNode = oldChildren[oldEndIndex],
+                            endIndex = children.length - 1,
+                            startNode = children[0],
+                            endNode = children[endIndex],
+                            map,
+                            node;
 
-                            while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
+                        while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
 
-                                if (oldStartNode === undefined) {
+                            if (oldStartNode === undefined) {
+                                oldStartIndex++;
+                            } else if (oldEndNode === undefined) {
+                                oldEndIndex--;
+                                // Update nodes with the same key at the beginning.	
+                            } else if (oldStartNode.equalTo(startNode)) {
+                                    oldStartNode.patch(startNode);
                                     oldStartIndex++;
-                                } else if (oldEndNode === undefined) {
-                                    oldEndIndex--;
-                                    // Update nodes with the same key at the beginning.	
-                                } else if (oldStartNode.equalTo(startNode)) {
-                                        oldStartNode.patch(startNode);
-                                        oldStartIndex++;
-                                        StartIndex++;
-                                        // Update nodes with the same key at the end.	
-                                    } else if (oldEndNode.equalTo(endNode)) {
-                                            oldEndNode.patch(endNode);
-                                            oldEndIndex--;
+                                    StartIndex++;
+                                    // Update nodes with the same key at the end.	
+                                } else if (oldEndNode.equalTo(endNode)) {
+                                        oldEndNode.patch(endNode);
+                                        oldEndIndex--;
+                                        endIndex--;
+                                        // Move nodes from left to right.
+                                    } else if (oldStartNode.equalTo(endNode)) {
+                                            oldStartNode.patch(endNode);
+
+                                            container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
+
+                                            oldStartIndex++;
+
                                             endIndex--;
-                                            // Move nodes from left to right.
-                                        } else if (oldStartNode.equalTo(endNode)) {
-                                                oldStartNode.patch(endNode, container);
-                                                container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
-                                                oldStartIndex++;
-                                                endIndex--;
 
-                                                // Move nodes from right to left.	
-                                            } else if (oldEndNode.equalTo(startNode)) {
+                                            // Move nodes from right to left.	
+                                        } else if (oldEndNode.equalTo(startNode)) {
 
-                                                    oldEndNode.patch(startNode);
+                                                oldEndNode.patch(startNode);
+                                                container.insertBefore(oldEndNode.node, oldStartNode.node);
+                                                oldEndIndex--;
+                                                StartIndex++;
+                                            } else {
 
-                                                    container.insertBefore(oldEndNode.node, oldStartNode.node);
-
-                                                    oldEndIndex--;
-                                                    StartIndex++;
-                                                } else {
-
-                                                    if (map === undefined) {
-                                                        map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
-                                                    }
-
-                                                    index = map[startNode.key];
-
-                                                    if (index) {
-
-                                                        node = oldChildren[index];
-                                                        oldChildren[index] = undefined;
-
-                                                        node.patch(startNode);
-
-                                                        container.insertBefore(node.node, oldStartNode.node);
-                                                    } else {
-                                                        // create a new element
-
-                                                        insertChildAt(container, startNode, oldStartNode);
-                                                    }
-
-                                                    StartIndex++;
+                                                if (map === undefined) {
+                                                    map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
                                                 }
-                                oldStartNode = oldChildren[oldStartIndex];
-                                oldEndNode = oldChildren[oldEndIndex];
-                                endNode = children[endIndex];
-                                startNode = children[StartIndex];
-                            }
-                            if (oldStartIndex > oldEndIndex) {
 
-                                var pos = children[endIndex + 1] === undefined ? null : children[endIndex + 1];
+                                                index = map[startNode.key];
 
-                                for (; StartIndex <= endIndex; StartIndex++) {
-                                    insertChildAt(container, children[StartIndex], pos);
+                                                if (index) {
+
+                                                    node = oldChildren[index];
+                                                    oldChildren[index] = undefined;
+                                                    node.patch(startNode);
+                                                    container.insertBefore(node.node, oldStartNode.node);
+                                                } else {
+                                                    // create a new element
+
+                                                    container.insertBefore(startNode.render(), oldStartNode.node);
+                                                }
+
+                                                StartIndex++;
+                                            }
+                            oldStartNode = oldChildren[oldStartIndex];
+                            oldEndNode = oldChildren[oldEndIndex];
+                            endNode = children[endIndex];
+                            startNode = children[StartIndex];
+                        }
+                        if (oldStartIndex > oldEndIndex) {
+
+                            for (; StartIndex <= endIndex; StartIndex++) {
+                                if (children[endIndex + 1] === undefined) {
+                                    container.appendChild(children[StartIndex].render());
+                                } else {
+                                    container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
                                 }
-                            } else if (StartIndex > endIndex) {
+                            }
+                        } else if (StartIndex > endIndex) {
 
-                                for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
-                                    if (oldChildren[oldStartIndex] !== undefined) {
-                                        oldChildren[oldStartIndex].detach();
-                                    }
+                            for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
+                                if (oldChildren[oldStartIndex] !== undefined) {
+                                    oldChildren[oldStartIndex].detach();
                                 }
                             }
                         }
-            }
-        } else if (children != null && children.length > 0) {
-            for (var i = 0; i < children.length; i++) {
-                insertChildAt(container, children[i]);
-            }
+                    }
         }
 
         return children;
@@ -1644,60 +1602,61 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
     };
 
-    var prototype_patch = function prototype_patch(ref, context) {
+    var prototype_patch = function prototype_patch(ref) {
 
-        if (this.equalTo(ref)) {
-            var node = this.node;
-            var tagName = this.tagName;
-            var props = this.props;
-            var attrs = this.attrs;
-            var children = this.children;
-            var events = this.events;
-            var hooks = this.hooks;
+        if (!this.equalTo(ref)) {
 
-            ref.node = this.node;
-
-            // Special case - select
-            if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-                renderSelect(ref);
-            }
-
-            // Patch / diff properties
-            if (props !== ref.props) {
-                patchProperties(node, ref.props, props);
-            }
-
-            // Patch / diff attributes
-            if (attrs !== ref.attrs) {
-                patchAttributes(node, ref.attrs, attrs);
-            }
-
-            if (events !== ref.events) {
-                // Handle events
-                if (ref.events) {
-
-                    node._handler = ref;
-                } else if (events !== undefined) {
-
-                    node._handler = undefined;
-                }
-            }
-            // Handle hooks
-            if (hooks !== undefined) {
-                if (hooks.updated) {
-                    hooks.updated(this, node);
-                }
-            }
-
-            // Patch / diff children
-            if (children !== ref.children) {
-                patch(context || node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-            }
-
-            return node;
+            return ref.render(this.parent);
         }
-        return ref.render();
+
+        var node = this.node;
+
+        // Special case - select
+        var tagName = this.tagName;
+        var props = this.props;
+        var attrs = this.attrs;
+        var children = this.children;
+        var events = this.events;
+        var hooks = this.hooks;
+        if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
+
+            renderSelect(ref);
+        }
+
+        ref.node = this.node;
+
+        // Patch / diff children
+        if (children !== ref.children) {
+            patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
+        }
+
+        // Patch / diff properties
+        if (props !== ref.props) {
+            patchProperties(node, ref.props, props);
+        }
+        // Patch / diff attributes
+        if (attrs !== ref.attrs) {
+            patchAttributes(node, ref.attrs, attrs);
+        }
+
+        if (events !== ref.events) {
+            // Handle events
+            if (ref.events) {
+
+                node._handler = ref;
+            } else if (events !== undefined) {
+
+                node._handler = undefined;
+            }
+        }
+        // Handle hooks
+        if (hooks !== undefined) {
+            if (hooks.updated) {
+                hooks.updated(this, node);
+            }
+        }
+
+        return node;
     };
 
     /**
@@ -1757,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
       */
     var equalTo = function equalTo(node) {
 
-        return this.key === node.key && this.tagName === node.tagName && this.flag === node.flag && this.namespace === node.namespace && this.typeExtension === node.typeExtension;
+        return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
     };
 
     var init = function init(tagName, options, children) {
@@ -1801,6 +1760,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.node = null;
 
         /**
+         * Reference to the parent node - a DOM element used for W3C DOM API calls
+         */
+        this.parent = null;
+
+        /**
          * Add data 
          */
         this.data = options.data;
@@ -1827,22 +1791,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.flag = flags__ELEMENT;
     };
 
-    /**
-     * To get a 'normal' average performance in Internet Explorer,
-     * we need to create, and inject the children BEFORE we
-     * render it's content
-     *
-     * @param {!Element} node Real DOM node
-     * @param {Object} child virtual node object
-     * @param {Object} parent where we inherit the namespace from
-     */
-    var injectChildren = function injectChildren(node, child, parent) {
-
-        child.create(parent);
-        this.node.appendChild(child.node);
-        child.render();
-    };
-
     function Element(tagName, options, children) {
 
         this.init(tagName, options, children);
@@ -1857,8 +1805,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         destroy: destroy,
         detach: prototype_detach,
         equalTo: equalTo,
-        init: init,
-        injectChildren: injectChildren
+        init: init
     };
 
     /** Export */
@@ -1887,15 +1834,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
             if (children.length) {
 
                 if (children.length === 1 && children[0]) {
-                    insertChildAt(root, children[0]);
+
+                    root.appendChild(children[0].render());
                 } else {
 
                     var index = 0,
                         length = children.length;
                     for (; index < length; index += 1) {
+
                         // ignore incompatible children
                         if (children[index]) {
-                            insertChildAt(root, children[index]);
+
+                            root.appendChild(children[index].render());
                         }
                     }
                 }
@@ -1966,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 var activeElement = document.activeElement;
 
                 if (!node) {
-                    node = mount.callback;
+                    node = mount.factory;
                 }
 
                 // update and re-order child nodes         
@@ -2011,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, callback, container, children) {
+    var glue = function glue(selector, factory, container, children) {
         if (container === undefined) container = {};
         var mountContainer = this.mountContainer;
 
@@ -2037,8 +1987,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
 
             container.root = root;
-            container.callback = callback;
-            container.children = children(root, callback);
+            container.factory = factory;
+            container.children = children(root, factory);
 
             this.mountContainer[mountId] = container;
 
@@ -2477,7 +2427,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8c"
+        version: "0.1.8b"
     };
 
     return trackira;
