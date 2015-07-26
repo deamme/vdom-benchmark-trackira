@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8b
+ * @Version: v0.1.8c
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -1916,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 var activeElement = document.activeElement;
 
                 if (!node) {
-                    node = mount.factory;
+                    node = mount.callback;
                 }
 
                 // update and re-order child nodes         
@@ -1961,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
     };
 
-    var glue = function glue(selector, factory, container, children) {
+    var glue = function glue(selector, callback, container, children) {
         if (container === undefined) container = {};
         var mountContainer = this.mountContainer;
 
@@ -1987,8 +1987,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
 
             container.root = root;
-            container.factory = factory;
-            container.children = children(root, factory);
+            container.callback = callback;
+            container.children = children(root, callback);
 
             this.mountContainer[mountId] = container;
 
@@ -2310,6 +2310,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             } else if (type === "select") {
 
                 if (node.multiple) {
+
 
                     var result = [];
 
