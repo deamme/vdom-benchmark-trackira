@@ -914,9 +914,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
          */
         mountToDomSync: mount.mountToDomSync,
 
-        mountToDomSync: mount.unmountFromDom,
+        unmountFromDom: mount.unmountFromDom,
 
-        mountToDomSync: mount.unmountFromDomSync
+        unmountFromDomSync: mount.unmountFromDomSync
     };
 
     /**
