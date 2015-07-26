@@ -42,15 +42,22 @@ BenchmarkImpl.prototype.tearDown = function() {
 
 BenchmarkImpl.prototype.render = function() {
   this._node = new Element("div", {}, renderTree(this.a));
-  this._root = this._node.render();
+  
+  this._node.create();
+  
+  this._root = this._node.node;
   this.container.appendChild(this._root);
+  
+  this._node.render();
 };
 
 BenchmarkImpl.prototype.update = function() {
   var newNode = new Element("div", {}, renderTree(this.b));
   this._root = this._node.patch(newNode);
+  
   this._node = newNode;
 };
+
 
 document.addEventListener('DOMContentLoaded', function(e) {
   benchmark(NAME, VERSION, BenchmarkImpl);
@@ -2679,7 +2686,6 @@ function initFromParentWindow(parent, name, version, id) {
 
       parent.postMessage({
         type: 'ready',
-
         data: null,
         id: id
       }, '*');
