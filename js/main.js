@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.8c
+ * @Version: v0.1.9
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * @param {Object} to
      * @return {boolean}
      */
-
     Text.prototype.equalTo = function (node) {
         return this.flag === node.flag;
     };
@@ -509,7 +508,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
     // For HTML, certain tags should omit their close tag. We keep a whitelist for
     // those special cased tags
-
 
     var selfClosing = {
         "area": 1,
@@ -1360,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                             }
                         }
 
-                        if (updated) {
+                        if (updated && oldChildren.length) {
                             for (length = oldChildren.length; index < length; index += 1) {
                                 oldChildren[index++].detach();
                             }
@@ -1418,10 +1416,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                 if (map === undefined) {
                                                     map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
                                                 }
-
                                                 index = map[startNode.key];
 
-                                                if (index) {
+                                                if (startNode.key in map) {
 
                                                     node = oldChildren[index];
                                                     oldChildren[index] = undefined;
@@ -2018,6 +2015,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
     };
 
     /**
+
      * Return all mounted children for a virtual DOM node
      * @param  {String|Number} uuid
      */
@@ -2178,7 +2176,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 this.isPropagationStopped = true;
             };
 
-            while (e.delegateTarget && e.delegateTarget !== root.eventHandler) {
+            while (e.delegateTarget !== null && e.delegateTarget !== root.context.parentNode) {
 
                 root.eventHandler(evt, e);
 
@@ -2191,7 +2189,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
         };
     };
 
-    var bind = function bind(evt, useCapture) {
+    var capturable = {
+        "blur": true,
+        "focus": true
+    };
+
+    var bind = function bind(evt) {
 
         var handler = globalEventListener(this, evt);
 
@@ -2201,7 +2204,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         this.eventContainer[evt] = handler;
-        addEventListener(this.context, evt, this.eventContainer[evt], useCapture || false);
+        addEventListener(this.context, evt, this.eventContainer[evt], capturable[evt] !== undefined || false);
 
         return handler;
     };
@@ -2218,13 +2221,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
         node.removeEventListener(type, callback, useCapture || false);
     };
 
-    var unbind = function unbind(type, useCapture) {
+    var unbind = function unbind(type) {
 
         if (arguments.length) {
 
             if (this.eventContainer[type]) {
 
-                removeEventListener(this.context, type, this.eventContainer[type], useCapture || false);
+                removeEventListener(this.context, type, this.eventContainer[type], capturable[type] !== undefined || false);
             }
         } else {
 
@@ -2310,7 +2313,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
             } else if (type === "select") {
 
                 if (node.multiple) {
-
 
                     var result = [];
 
@@ -2428,7 +2430,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.1.8b"
+        version: "0.1.9"
     };
 
     return trackira;
