@@ -58,13 +58,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.9
- * @Author: Kenny Flashlight
- * @Homepage: http://trackira.github.io/trackira/
- * @License: MIT
- */
-/**
- * trackira - Virtual DOM boilerplate
  * @Version: v0.1.9a
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
@@ -121,23 +114,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	Text.prototype.flag = flags__TEXT;
 
 	/**
-  * Creates a virtual text node.
-  * @return {!Text}
-  */
-	Text.prototype.create = function () {
-		if (!this.node) {
-			this.node = document.createTextNode(this.text);
-		}
-		return this.node;
-	};
-
-	/**
   * Render a virtual text node
   *
   * @return Object
   */
 	Text.prototype.render = function () {
-		return this.create();
+		var node = this.node;
+
+		if (!node) {
+			this.node = document.createTextNode(this.text);
+		}
+		return this.node;
 	};
 
 	/**
@@ -157,18 +144,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * @return {Object}
   */
 	Text.prototype.patch = function (ref) {
+		var node = this.node;
 
 		if (this.equalTo(ref)) {
 
-			ref.node = this.node;
+			ref.node = node;
 
 			// .nodeValue gives better performance then textContent
 			// http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
 			if (ref.text !== this.text) {
-				this.node.nodeValue = ref.text;
+				node.nodeValue = ref.text;
 			}
 
-			return this.node;
+			return node;
 		}
 
 		// re-render...
@@ -180,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   */
 	Text.prototype.destroy = function () {
 		var node = this.node;
+
 		if (node.parentNode) {
 			node.parentNode.removeChild(node);
 		}
@@ -196,11 +185,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
   *
   */
 	Text.prototype.toHTML = function (escape) {
+
 		if (escape) {
 			return escapeHtml(this.text);
-		} else {
-			return this.text;
 		}
+		return this.text;
 	};
 
 	/**
@@ -240,23 +229,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	Comment.prototype.flag = flags__COMMENT;
 
 	/**
-  * Creates a virtual comment node.
-  * @return {!Comment}
-  */
-	Comment.prototype.create = function () {
-		if (!this.node) {
-			this.node = document.createComment(this.text);
-		}
-		return this.node;
-	};
-
-	/**
   * Render and return a virtual comment node
   *
   * @return Object
   */
 	Comment.prototype.render = function () {
-		return this.create();
+		var node = this.node;
+
+		if (!node) {
+			this.node = node = document.createComment(this.text);
+		}
+		return node;
 	};
 
 	/**
@@ -266,15 +249,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * @return {Object}
   */
 	Comment.prototype.patch = function (ref) {
+		var node = this.node;
 
 		if (this.equalTo(ref)) {
 
 			// .nodeValue gives better performance then textContent
 			// http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
 			if (ref.text !== this.text) {
-				this.node.nodeValue = ref.text;
+				node.nodeValue = ref.text;
 			}
-			return ref.node = this.node;
+			return ref.node = node;
 		}
 
 		// re-render...
@@ -303,6 +287,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   */
 	Comment.prototype.destroy = function () {
 		var node = this.node;
+
 		if (node.parentNode) {
 			node.parentNode.removeChild(node);
 		}
@@ -493,19 +478,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			return node;
-		}
-	};
-
-	/**
-  * Creates an Element.
-  * @return {!Element}
-  */
-	var create = function create(namespace, tagName, typeExtension) {
-
-		if (namespace) {
-			return typeExtension ? document.createElementNS(namespace, tagName, typeExtension) : document.createElementNS(namespace, tagName);
-		} else {
-			return typeExtension ? document.createElement(tagName, typeExtension) : document.createElement(tagName);
 		}
 	};
 
@@ -1161,6 +1133,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+	/**
+  * Creates an Element.
+  * @param {String} namespace
+  * @param {String} tagName
+  * @param {String} typeExtension
+  * @return {!Element}
+  */
 	var createElement = function createElement(namespace, tagName, typeExtension) {
 
 		if (namespace) {
@@ -1819,11 +1798,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * Virtual Element
    */
 		append: prototype_append,
-
-		/**
-   * Create a virtual HTML node
-   */
-		create: create,
 
 		/**
    * Server side rendring
