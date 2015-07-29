@@ -1,3 +1,4 @@
+
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var benchmark = require('vdom-benchmark-base');
 var Trackira = require('trackiraa/Trackira');
@@ -1149,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-	var render = function render(parent) {
+	var render = function render(parent, rootNode) {
 		var _this = this;
 		var node = _this.node;
 		var tagName = _this.tagName;
@@ -1166,9 +1167,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		// Set the namespace to create an element (of a given tag) in.
 		if (namespace == null) {
-			this.namespace = namespace = setNamespace(tagName, namespace, parent);
+			_this.namespace = namespace = setNamespace(tagName, namespace, parent);
 		}
-
 
 		/**
    * Create a new virtual element
@@ -1176,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * the node can be created twice.
    */
 		if (node == null) {
-			this.node = node = createElement(namespace, tagName, typeExtension);
+			_this.node = node = createElement(namespace, tagName, typeExtension);
 		}
 
 		/**
@@ -1240,6 +1240,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				hooks.created(_this, node);
 			}
 		}
+
+		if (rootNode != null) {
+			rootNode.appendChild(node);
+		}
+
 		return node;
 	};
 
@@ -1887,7 +1892,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 				if (children.length === 1 && children[0]) {
 
-					root.appendChild(children[0].render());
+					//root.appendChild(children[0].render());
+					children[0].render(null, root);
 				} else {
 
 					var index = 0,
@@ -1897,7 +1903,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						// ignore incompatible children
 						if (children[index]) {
 
-							root.appendChild(children[index].render());
+							children[index].render(null, root);
+							//                        root.appendChild(children[index].render());
 						}
 					}
 				}
@@ -2249,6 +2256,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	var bind = function bind(evt) {
+
 
 		var handler = globalEventListener(this, evt);
 
