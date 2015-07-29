@@ -1150,16 +1150,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	var render = function render(parent) {
-		var tagName = this.tagName;
-		var children = this.children;
-		var props = this.props;
-		var attrs = this.attrs;
-		var hooks = this.hooks;
-		var typeExtension = this.typeExtension;
-		var namespace = this.namespace;
+		var _this = this;
+		var node = _this.node;
+		var tagName = _this.tagName;
+		var children = _this.children;
+		var props = _this.props;
+		var attrs = _this.attrs;
+		var hooks = _this.hooks;
+		var typeExtension = _this.typeExtension;
+		var namespace = _this.namespace;
 
 		if (parent) {
-
 			this.parent = parent;
 		}
 
@@ -1168,11 +1169,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			this.namespace = namespace = setNamespace(tagName, namespace, parent);
 		}
 
-		// create a new virtual element
-		if (this.node == null) {
-			this.node = createElement(namespace, tagName, typeExtension);
+
+		/**
+   * Create a new virtual element
+   * Note! We need to check if the internal node are 'null'. During the diffing,
+   * the node can be created twice.
+   */
+		if (node == null) {
+			this.node = node = createElement(namespace, tagName, typeExtension);
 		}
-		var node = this.node;
 
 		/**
    * Note! We are checking for 'null' for 'attrs' and 'props'
@@ -1182,8 +1187,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 			// Special case - select
 			if (tagName === "select") {
-
-				renderSelect(this);
+				renderSelect(_this);
 			}
 
 			// Render properties
@@ -1201,9 +1205,10 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (children.length) {
 
 			// ignore incompatible children
-			if (children.length === 1 && children[0]) {
-
-				node.appendChild(children[0].render(this));
+			if (children.length === 1) {
+				if (children[0]) {
+					node.appendChild(children[0].render(_this));
+				}
 			} else {
 
 				var index = 0,
@@ -1213,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					// ignore incompatible children
 					if (children[index]) {
 
-						node.appendChild(children[index].render(this));
+						node.appendChild(children[index].render(_this));
 					}
 				}
 			}
@@ -1223,16 +1228,16 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * Note! Only attach the reference for the virtual node if the DOM element 
    * has defined events to minimize overhead.
    */
-		if (this.events) {
+		if (_this.events) {
 
-			node._handler = this;
+			node._handler = _this;
 		}
 
 		// Handle hooks
 
 		if (hooks !== undefined) {
 			if (hooks.created) {
-				hooks.created(this, node);
+				hooks.created(_this, node);
 			}
 		}
 		return node;
@@ -1588,59 +1593,64 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var prototype_patch = function prototype_patch(ref) {
 
-		if (!this.equalTo(ref)) {
+		// cache the 'this' keyword for re-use
+		var _this = this;
 
-			return ref.render(this.parent);
-		}
+		if (_this.equalTo(ref)) {
+			var node = _this.node;
 
-		var node = this.node;
+			// Special case - select
+			var tagName = _this.tagName;
+			var props = _this.props;
+			var attrs = _this.attrs;
+			var children = _this.children;
+			var events = _this.events;
+			var hooks = _this.hooks;
+			if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
 
-		// Special case - select
-		var tagName = this.tagName;
-		var props = this.props;
-		var attrs = this.attrs;
-		var children = this.children;
-		var events = this.events;
-		var hooks = this.hooks;
-		if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-			renderSelect(ref);
-		}
-
-		ref.node = this.node;
-
-		// Patch / diff children
-		if (children !== ref.children) {
-			patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-		}
-
-		// Patch / diff properties
-		if (props !== ref.props) {
-			patchProperties(node, ref.props, props);
-		}
-		// Patch / diff attributes
-		if (attrs !== ref.attrs) {
-			patchAttributes(node, ref.attrs, attrs);
-		}
-
-		if (events !== ref.events) {
-			// Handle events
-			if (ref.events) {
-
-				node._handler = ref;
-			} else if (events !== undefined) {
-
-				node._handler = undefined;
+				renderSelect(ref);
 			}
-		}
-		// Handle hooks
-		if (hooks !== undefined) {
-			if (hooks.updated) {
-				hooks.updated(this, node);
+
+			ref.node = _this.node;
+
+			// Patch / diff children
+			if (children !== ref.children) {
+				patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
 			}
+
+			// Patch / diff properties
+			if (props !== ref.props) {
+				patchProperties(node, ref.props, props);
+			}
+
+			// Patch / diff attributes
+			if (attrs !== ref.attrs) {
+				patchAttributes(node, ref.attrs, attrs);
+			}
+
+			if (events !== ref.events) {
+
+				// Handle events
+				if (ref.events) {
+
+					node._handler = ref;
+				} else if (events !== undefined) {
+
+					node._handler = undefined;
+				}
+			}
+
+			// Handle hooks
+			if (hooks !== undefined) {
+				if (hooks.updated) {
+					hooks.updated(_this, node);
+				}
+			}
+
+			return node;
 		}
 
-		return node;
+		return ref.render(_this.parent);
 	};
 
 	/**
@@ -2273,11 +2283,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var commonEvents = ("blur change click contextmenu copy cut dblclick drag dragend dragenter dragexit dragleave dragover dragstart " + "drop focus input keydown keyup keypress mousedown mouseenter mouseleave mousemove mouseout mouseover mouseup paste scroll " + "submit touchcancel touchend touchmove touchstart wheel").split(" ");
 
 	var bindDefaultEvents = function bindDefaultEvents() {
-		var _this = this;
+		var _this2 = this;
 
 		each(commonEvents, function (evt) {
 
-			_this.bind(evt);
+			_this2.bind(evt);
 		});
 	};
 
