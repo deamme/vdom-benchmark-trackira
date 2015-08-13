@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.2.2
+ * @Version: v0.2.3a
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -291,6 +291,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
      * Removes the DOM node attached to the virtual node.
      */
     Comment.prototype.detach = function () {
+
 
         this.destroy();
     };
@@ -968,6 +969,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
             }
         };
 
+
         /**
          * Custom unset hook for the 'xml' attribute.
          */
@@ -1144,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         if (parent) {
 
             this.parent = parent;
-            this.namespace || (this.namespace = parent.namespace);
+            this.namespace = parent.namespace;
         }
 
         // Set the namespace to create an element (of a given tag) in.
@@ -1159,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         }
 
         // create a new virtual element
-        var node = createElement(this.namespace, this.tagName, this.typeExtension);;
+        var node = createElement(this.namespace, this.tagName, this.typeExtension);
 
         /**
          * Note! We are checking for 'null' for 'attrs' and 'props'
@@ -1191,10 +1193,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
             if (children.length === 1 && children[0]) {
 
                 node.appendChild(children[0].render(this));
+
+                this.attached = true;
             } else {
 
                 var index = 0,
                     length = children.length;
+
+                this.attached = true;
+
                 for (; index < length; index += 1) {
 
                     if (children[index]) {
@@ -1217,10 +1224,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
         // Handle hooks
 
         if (hooks !== undefined) {
+
+            // get triggered when the node are created
             if (hooks.created) {
                 hooks.created(this, node);
             }
+
+            // get triggered when children are attached
+            if (this.attached && hooks.children) {
+                hooks.children(this, node, props, attrs);
+            }
         }
+
         return this.node = node;
     };
 
@@ -1409,7 +1424,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
                                                 StartIndex++;
                                             } else {
 
-                                                map || (map = buildKeys(oldChildren, oldStartIndex, oldEndIndex));
+                                                if (map === undefined) {
+                                                    map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
+                                                }
 
                                                 index = map[startNode.key];
 
@@ -1771,9 +1788,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
         this.namespace = options.attrs && options.attrs.xmlns || null;
 
         /**
-         * is - custom elements / attributes, and type extensions
+         * type extensions
          */
         this.typeExtension = options.attrs && options.attrs.is || null;
+
+        /**
+         * Return either true/false (boolean) if children are attached to DOM during creation
+         */
+        this.attached = false;
 
         /**
          * Reference to the virtual node's flag
@@ -2005,7 +2027,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
         if (uuid) {
 
             var mount = this.mountContainer[uuid];
-
 
             return mount.children;
         }
@@ -2371,7 +2392,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
         /**
          * Current version of the library
          */
-        version: "0.2.1"
+        version: "0.2.3a"
     };
 
     return trackira;
