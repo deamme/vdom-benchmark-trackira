@@ -6,7 +6,7 @@ var Text = Trackira.Text;
 var patch = Trackira.patch;
 
 var NAME = 'Trackira';
-var VERSION = Trackira.version;
+var VERSION = "Beta";
 
 function renderTree(nodes) {
   var children = [];
@@ -142,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	/**
-
   * Patches the node by updating the nodeValue.
   *
   * @param {object} to Contains the next text content.
@@ -1319,19 +1318,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		var hasChildrenA = oldChildren && oldChildren.length,
 		    hasChildrenB = children && children.length;
 
-		if (!children.length == null || children.length === 0) {
+		if (!hasChildrenB) {
 			detach(oldChildren);
 			return;
 		}
 
-		/*  if (!hasChildrenA) {
-        var iB = 0;
-        while (iB < children.length) {
-            container.appendChild(childrenB[iB++].render(parent));
-        }
-        return;
-    }
-  */
+		if (!hasChildrenA) {
+			var iB = 0;
+			while (iB < children.length) {
+				container.appendChild(children[iB++].render(parent));
+			}
+			return;
+		}
+
 		if (oldChildren.length === 1 && children.length === 1) {
 
 			if (oldChildren[0].equalTo(children[0])) {
@@ -1360,7 +1359,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 					firstChild.patch(lastChild);
 				}
 				container.insertBefore(lastChild.render(), firstChild.node);
-
 			}
 			return;
 		}
