@@ -1,7 +1,6 @@
-
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var benchmark = require('vdom-benchmark-base');
-var Trackira = require('trackiraa/Trackira');
+var Trackira = require('trackiraa');
 var Element = Trackira.Element;
 var Text = Trackira.Text;
 var patch = Trackira.patch;
@@ -36,7 +35,6 @@ function BenchmarkImpl(container, a, b) {
 
 BenchmarkImpl.prototype.setUp = function() {
 };
-
 BenchmarkImpl.prototype.tearDown = function() {
   this._node.detach();
 };
@@ -52,14 +50,13 @@ BenchmarkImpl.prototype.update = function() {
   this._root = this._node.patch(newNode);
   this._node = newNode;
 };
-
 document.addEventListener('DOMContentLoaded', function(e) {
   benchmark(NAME, VERSION, BenchmarkImpl);
 }, false);
-},{"trackiraa/Trackira":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
+},{"trackiraa":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * trackira - Virtual DOM boilerplate
- * @Version: v0.1.9a
+ * @Version: v0.2.2
  * @Author: Kenny Flashlight
  * @Homepage: http://trackira.github.io/trackira/
  * @License: MIT
@@ -115,17 +112,23 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	Text.prototype.flag = flags__TEXT;
 
 	/**
+  * Creates a virtual text node.
+  * @return {!Text}
+  */
+	Text.prototype.create = function () {
+		if (!this.node) {
+			this.node = document.createTextNode(this.text);
+		}
+		return this.node;
+	};
+
+	/**
   * Render a virtual text node
   *
   * @return Object
   */
 	Text.prototype.render = function () {
-		var node = this.node;
-
-		if (!node) {
-			this.node = document.createTextNode(this.text);
-		}
-		return this.node;
+		return this.create();
 	};
 
 	/**
@@ -139,25 +142,25 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	/**
+
   * Patches the node by updating the nodeValue.
   *
   * @param {object} to Contains the next text content.
   * @return {Object}
   */
 	Text.prototype.patch = function (ref) {
-		var node = this.node;
 
 		if (this.equalTo(ref)) {
 
-			ref.node = node;
+			ref.node = this.node;
 
 			// .nodeValue gives better performance then textContent
 			// http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
 			if (ref.text !== this.text) {
-				node.nodeValue = ref.text;
+				this.node.nodeValue = ref.text;
 			}
 
-			return node;
+			return this.node;
 		}
 
 		// re-render...
@@ -169,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   */
 	Text.prototype.destroy = function () {
 		var node = this.node;
-
 		if (node.parentNode) {
 			node.parentNode.removeChild(node);
 		}
@@ -186,11 +188,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
   *
   */
 	Text.prototype.toHTML = function (escape) {
-
 		if (escape) {
 			return escapeHtml(this.text);
+		} else {
+			return this.text;
 		}
-		return this.text;
 	};
 
 	/**
@@ -230,17 +232,23 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	Comment.prototype.flag = flags__COMMENT;
 
 	/**
+  * Creates a virtual comment node.
+  * @return {!Comment}
+  */
+	Comment.prototype.create = function () {
+		if (!this.node) {
+			this.node = document.createComment(this.text);
+		}
+		return this.node;
+	};
+
+	/**
   * Render and return a virtual comment node
   *
   * @return Object
   */
 	Comment.prototype.render = function () {
-		var node = this.node;
-
-		if (!node) {
-			this.node = node = document.createComment(this.text);
-		}
-		return node;
+		return this.create();
 	};
 
 	/**
@@ -250,16 +258,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * @return {Object}
   */
 	Comment.prototype.patch = function (ref) {
-		var node = this.node;
 
 		if (this.equalTo(ref)) {
 
 			// .nodeValue gives better performance then textContent
 			// http://jsperf.com/update-textcontent-vs-data-vs-nodevalue
 			if (ref.text !== this.text) {
-				node.nodeValue = ref.text;
+				this.node.nodeValue = ref.text;
 			}
-			return ref.node = node;
+			return ref.node = this.node;
 		}
 
 		// re-render...
@@ -288,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   */
 	Comment.prototype.destroy = function () {
 		var node = this.node;
-
 		if (node.parentNode) {
 			node.parentNode.removeChild(node);
 		}
@@ -316,15 +322,17 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		return value instanceof Array;
 	};
 
-	var processChildren = function processChildren(children) {
+	var normalize = function normalize(nodes) {
 
-		if (typeof children === "function") {
-			children = [children(children)];
-		} else if (!isArray(children)) {
-			children = [children];
+		if (typeof nodes === "function") {
+			nodes = nodes(nodes);
 		}
 
-		return children;
+		if (!isArray(nodes)) {
+			nodes = [nodes];
+		}
+
+		return nodes;
 	};
 
 	var append = function append(node, children, parent) {
@@ -337,8 +345,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
    */
 
 		if (node) {
-			// normalize child nodes
-			children = processChildren(children, parent);
+			// normalize the children
+			children = normalize(children, parent);
 
 			var i = 0,
 			    j = 0,
@@ -482,6 +490,35 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+	/**
+  * Creates an Element.
+  * @return {!Element}
+  */
+	var elemCache = {};
+	var createElement = function createElement(namespace, tagName, typeExtension) {
+		var node;
+		if (namespace) {
+			var key = namespace + ":" + tagName;
+			if (typeExtension) {
+				node = elemCache[key] || (elemCache[key] = document.createElementNS(namespace, tagName, typeExtension));
+			} else {
+				node = elemCache[key] || (elemCache[key] = document.createElementNS(namespace, tagName));
+			}
+		} else {
+			if (typeExtension) {
+				node = elemCache[tagName] || (elemCache[tagName] = document.createElement(tagName, typeExtension));
+			} else {
+				node = elemCache[tagName] || (elemCache[tagName] = document.createElement(tagName));
+			}
+		}
+
+		return node.cloneNode();
+	};
+
+	var create = function create() {
+		return createElement(this.namespace, this.tagName, this.typeExtension);
+	};
+
 	// For HTML, certain tags should omit their close tag. We keep a whitelist for
 	// those special cased tags
 
@@ -572,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	var createMarkupForAttributes = function createMarkupForAttributes(attrs, tagName) {
+
 
 		var markup = "",
 		    key,
@@ -1114,70 +1152,39 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-	var setNamespace = function setNamespace(tagName, namespace, parent) {
-		// Set the namespace to create an element (of a given tag) in.
-		if (namespace == null) {
-			switch (tagName) {
-				// Use SVG namespace, if this is an <svg> element
-				case "svg":
-					return "http://www.w3.org/2000/svg";
-				// ...or MATH, if the parent is a <math> element
-				case "math":
-					return "http://www.w3.org/1998/Math/MathML";
-				default:
-					// ...or inherit from the parent node
-					if (parent) {
-						return parent.namespace;
-					}
-					return null;
-			}
-		}
-	};
-
-	/**
-  * Creates an Element.
-  * @param {String} namespace
-  * @param {String} tagName
-  * @param {String} typeExtension
-  * @return {!Element}
-  */
-	var createElement = function createElement(namespace, tagName, typeExtension) {
-
-		if (namespace) {
-			return typeExtension ? document.createElementNS(namespace, tagName, typeExtension) : document.createElementNS(namespace, tagName);
-		} else {
-			return typeExtension ? document.createElement(tagName, typeExtension) : document.createElement(tagName);
-		}
-	};
-
-	var render = function render(parent, rootNode) {
-		var _this = this;
-		var node = _this.node;
-		var tagName = _this.tagName;
-		var children = _this.children;
-		var props = _this.props;
-		var attrs = _this.attrs;
-		var hooks = _this.hooks;
-		var typeExtension = _this.typeExtension;
-		var namespace = _this.namespace;
+	var render = function render(parent) {
+		var tagName = this.tagName;
+		var children = this.children;
+		var props = this.props;
+		var attrs = this.attrs;
+		var hooks = this.hooks;
 
 		if (parent) {
+
 			this.parent = parent;
 		}
 
 		// Set the namespace to create an element (of a given tag) in.
-		if (namespace == null) {
-			_this.namespace = namespace = setNamespace(tagName, namespace, parent);
+		if (this.namespace == null) {
+			switch (tagName) {
+				// Use SVG namespace, if this is an <svg> element
+				case "svg":
+					this.namespace = "http://www.w3.org/2000/svg";
+					break;
+				// ...or MATH, if the parent is a <math> element
+				case "math":
+					this.namespace = "http://www.w3.org/1998/Math/MathML";
+					break;
+				default:
+					// ...or inherit from the parent node
+					if (parent) {
+						this.namespace = parent.namespace;
+					}
+			}
 		}
 
-		/**
-   * Create a new virtual element
-   * Note! We need to check if the internal node are 'null'. During the diffing,
-   * the node can be created twice.
-   */
-		if (node == null) {
-			_this.node = node = createElement(namespace, tagName, typeExtension);
-		}
+		// create a new virtual element
+		var node = this.node = this.create();
 
 		/**
    * Note! We are checking for 'null' for 'attrs' and 'props'
@@ -1187,7 +1194,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 			// Special case - select
 			if (tagName === "select") {
-				renderSelect(_this);
+
+				renderSelect(this);
 			}
 
 			// Render properties
@@ -1205,20 +1213,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (children.length) {
 
 			// ignore incompatible children
-			if (children.length === 1) {
-				if (children[0]) {
-					node.appendChild(children[0].render(_this));
-				}
+			if (children.length === 1 && children[0]) {
+
+				node.appendChild(children[0].render(this));
 			} else {
 
 				var index = 0,
 				    length = children.length;
-
 				for (; index < length; index += 1) {
-					// ignore incompatible children
+
 					if (children[index]) {
 
-						node.appendChild(children[index].render(_this));
+						node.appendChild(children[index].render(this));
 					}
 				}
 			}
@@ -1228,23 +1234,18 @@ document.addEventListener('DOMContentLoaded', function(e) {
    * Note! Only attach the reference for the virtual node if the DOM element 
    * has defined events to minimize overhead.
    */
-		if (_this.events) {
+		if (this.events) {
 
-			node._handler = _this;
+			node._handler = this;
 		}
 
 		// Handle hooks
 
 		if (hooks !== undefined) {
 			if (hooks.created) {
-				hooks.created(_this, node);
+				hooks.created(this, node);
 			}
 		}
-
-		if (rootNode != null) {
-			rootNode.appendChild(node);
-		}
-
 		return node;
 	};
 
@@ -1284,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * @param  {Number} endIndex 
   * @return {Object} A mapping of keys to the children of the virtual node.
   */
-	var buildKeys = function buildKeys(children, startIndex, endIndex) {
+	var keyMapping = function keyMapping(children, startIndex, endIndex) {
 
 		var child,
 		    keys = {};
@@ -1313,172 +1314,168 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-	var patch = function patch(container, oldChildren, children) {
+	var patch = function patch(container, oldChildren, children, parent) {
 
-		if (children.length == null || children.length === 0) {
+		var hasChildrenA = oldChildren && oldChildren.length,
+		    hasChildrenB = children && children.length;
+
+		if (!children.length == null || children.length === 0) {
 			detach(oldChildren);
-		} else {
+			return;
+		}
 
-			var firstChild = oldChildren[0],
-			    lastChild = children[0],
-			    updated = false,
-			    index = 0,
-			    length;
+		/*  if (!hasChildrenA) {
+        var iB = 0;
+        while (iB < children.length) {
+            container.appendChild(childrenB[iB++].render(parent));
+        }
+        return;
+    }
+  */
+		if (oldChildren.length === 1 && children.length === 1) {
 
-			/**
-    * Both 'oldChildren' and 'children' are a single child
-    */
-			if (oldChildren.length === 1 && children.length === 1) {
+			if (oldChildren[0].equalTo(children[0])) {
+				oldChildren[0].patch(children[0]);
+			} else {
+				oldChildren[0].detach();
+				container.appendChild(children[0].render(parent));
+			}
+			return;
+		}
+
+		var firstChild = oldChildren[0],
+		    lastChild = children[0],
+		    updated = false,
+		    index = 0,
+		    length;
+
+		// Both 'oldChildren' and 'children' are a lonely child
+		if (oldChildren.length === 1) {
+
+			for (index = 0, length = children.length; index < length; index += 1) {
+
+				lastChild = children[index];
 
 				if (firstChild.equalTo(lastChild)) {
 					firstChild.patch(lastChild);
-				} else {
-					firstChild.detach();
-					container.appendChild(lastChild.render());
 				}
+				container.insertBefore(lastChild.render(), firstChild.node);
 
-				/**
-     * 'oldChildren' is a single child
-     */
-			} else if (oldChildren.length === 1) {
+			}
+			return;
+		}
 
-					while (index < children.length) {
+		// 'children' is a single child
+		if (children.length === 1) {
 
-						lastChild = children[index++];
+			for (index = 0, length = oldChildren.length; index < length; index += 1) {
 
-						if (firstChild.key == null && firstChild.equalTo(lastChild) || firstChild.key === lastChild.key) {
-							firstChild.patch(lastChild);
-							updated = true;
-							break;
-						}
+				firstChild = oldChildren[index];
 
-						container.insertBefore(lastChild.render(), firstChild.node);
-					}
+				if (firstChild.equalTo(lastChild)) {
+					firstChild.patch(lastChild);
+					updated = true;
+				} else {
+					// Detach the node
+					firstChild.detach();
+				}
+			}
 
-					if (updated) {
-						while (index < children.length) {
+			if (updated) {
+				for (length = oldChildren.length; index < length; index += 1) {
+					oldChildren[index++].detach();
+				}
+			} else {
+				container.appendChild(lastChild.render());
+			}
+			return;
+		}
 
-							container.appendChild(children[index++].render());
-						}
-					} else {
-						firstChild.detach();
-					}
+		var oldStartIndex = 0,
+		    StartIndex = 0,
+		    oldEndIndex = oldChildren.length - 1,
+		    oldStartNode = oldChildren[0],
+		    oldEndNode = oldChildren[oldEndIndex],
+		    endIndex = children.length - 1,
+		    startNode = children[0],
+		    endNode = children[endIndex],
+		    map,
+		    node;
 
-					/**
-      * 'children' is a single child
-      */
-				} else if (children.length === 1) {
+		while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
 
-						while (index < oldChildren.length) {
+			if (oldStartNode === undefined) {
+				oldStartIndex++;
+			} else if (oldEndNode === undefined) {
+				oldEndIndex--;
+				// Update nodes with the same key at the beginning.	
+			} else if (oldStartNode.equalTo(startNode)) {
+					oldStartNode.patch(startNode);
+					oldStartIndex++;
+					StartIndex++;
+					// Update nodes with the same key at the end.	
+				} else if (oldEndNode.equalTo(endNode)) {
+						oldEndNode.patch(endNode);
+						oldEndIndex--;
+						endIndex--;
+						// Move nodes from left to right.
+					} else if (oldStartNode.equalTo(endNode)) {
+							oldStartNode.patch(endNode);
 
-							firstChild = oldChildren[index++];
+							container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
 
-							if (firstChild.equalTo(lastChild)) {
-								firstChild.patch(lastChild);
-								updated = true;
-							} else {
-								// Detach the node
-								firstChild.detach();
-							}
-						}
+							oldStartIndex++;
 
-						if (updated && oldChildren.length) {
-							while (index < oldChildren.length) {
-								oldChildren[index++].detach();
-							}
-						} else {
-							container.appendChild(lastChild.render());
-						}
-					} else {
+							endIndex--;
 
-						var oldStartIndex = 0,
-						    StartIndex = 0,
-						    oldEndIndex = oldChildren.length - 1,
-						    oldStartNode = oldChildren[0],
-						    oldEndNode = oldChildren[oldEndIndex],
-						    endIndex = children.length - 1,
-						    startNode = children[0],
-						    endNode = children[endIndex],
-						    map,
-						    node;
+							// Move nodes from right to left.	
+						} else if (oldEndNode.equalTo(startNode)) {
 
-						while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
-
-							if (oldStartNode === undefined) {
-								oldStartIndex++;
-							} else if (oldEndNode === undefined) {
+								oldEndNode.patch(startNode);
+								container.insertBefore(oldEndNode.node, oldStartNode.node);
 								oldEndIndex--;
-								// Update nodes with the same key at the beginning.	
-							} else if (oldStartNode.equalTo(startNode)) {
-									oldStartNode.patch(startNode);
-									oldStartIndex++;
-									StartIndex++;
-									// Update nodes with the same key at the end.	
-								} else if (oldEndNode.equalTo(endNode)) {
-										oldEndNode.patch(endNode);
-										oldEndIndex--;
-										endIndex--;
-										// Move nodes from left to right.
-									} else if (oldStartNode.equalTo(endNode)) {
-											oldStartNode.patch(endNode);
+								StartIndex++;
+							} else {
 
-											container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
+								if (map === undefined) {
+									map = keyMapping(oldChildren, oldStartIndex, oldEndIndex);
+								}
 
-											oldStartIndex++;
+								index = map[startNode.key];
 
-											endIndex--;
-
-											// Move nodes from right to left.	
-										} else if (oldEndNode.equalTo(startNode)) {
-
-												oldEndNode.patch(startNode);
-												container.insertBefore(oldEndNode.node, oldStartNode.node);
-												oldEndIndex--;
-												StartIndex++;
-											} else {
-
-												if (map === undefined) {
-													map = buildKeys(oldChildren, oldStartIndex, oldEndIndex);
-												}
-												index = map[startNode.key];
-
-												if (startNode.key in map) {
-
-													node = oldChildren[index];
-													oldChildren[index] = undefined;
-													node.patch(startNode);
-													container.insertBefore(node.node, oldStartNode.node);
-												} else {
-													// create a new element
-
-													container.insertBefore(startNode.render(), oldStartNode.node);
-												}
-
-												StartIndex++;
-											}
-							oldStartNode = oldChildren[oldStartIndex];
-							oldEndNode = oldChildren[oldEndIndex];
-							endNode = children[endIndex];
-							startNode = children[StartIndex];
-						}
-						if (oldStartIndex > oldEndIndex) {
-
-							for (; StartIndex <= endIndex; StartIndex++) {
-								if (children[endIndex + 1] === undefined) {
-									container.appendChild(children[StartIndex].render());
+								if (index === undefined) {
+									// create a new element
+									container.insertBefore(startNode.render(parent), oldStartNode.node);
 								} else {
-									container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
+									node = oldChildren[index];
+									node.patch(startNode);
+									oldChildren[index] = undefined;
+									container.insertBefore(node.node, oldStartNode.node);
 								}
-							}
-						} else if (StartIndex > endIndex) {
 
-							for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
-								if (oldChildren[oldStartIndex] !== undefined) {
-									oldChildren[oldStartIndex].detach();
-								}
+								StartIndex++;
 							}
-						}
-					}
+			oldStartNode = oldChildren[oldStartIndex];
+			oldEndNode = oldChildren[oldEndIndex];
+			endNode = children[endIndex];
+			startNode = children[StartIndex];
+		}
+		if (oldStartIndex > oldEndIndex) {
+
+			for (; StartIndex <= endIndex; StartIndex++) {
+				if (children[endIndex + 1] === undefined) {
+					container.appendChild(children[StartIndex].render());
+				} else {
+					container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
+				}
+			}
+		} else if (StartIndex > endIndex) {
+
+			for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
+				if (oldChildren[oldStartIndex] !== undefined) {
+					oldChildren[oldStartIndex].detach();
+				}
+			}
 		}
 
 		return children;
@@ -1625,64 +1622,59 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var prototype_patch = function prototype_patch(ref) {
 
-		// cache the 'this' keyword for re-use
-		var _this = this;
+		if (!this.equalTo(ref)) {
 
-		if (_this.equalTo(ref)) {
-			var node = _this.node;
-
-			// Special case - select
-			var tagName = _this.tagName;
-			var props = _this.props;
-			var attrs = _this.attrs;
-			var children = _this.children;
-			var events = _this.events;
-			var hooks = _this.hooks;
-			if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
-
-				renderSelect(ref);
-			}
-
-			ref.node = _this.node;
-
-			// Patch / diff children
-			if (children !== ref.children) {
-				patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children);
-			}
-
-			// Patch / diff properties
-			if (props !== ref.props) {
-				patchProperties(node, ref.props, props);
-			}
-
-			// Patch / diff attributes
-			if (attrs !== ref.attrs) {
-				patchAttributes(node, ref.attrs, attrs);
-			}
-
-			if (events !== ref.events) {
-
-				// Handle events
-				if (ref.events) {
-
-					node._handler = ref;
-				} else if (events !== undefined) {
-
-					node._handler = undefined;
-				}
-			}
-
-			// Handle hooks
-			if (hooks !== undefined) {
-				if (hooks.updated) {
-					hooks.updated(_this, node);
-				}
-			}
-
-			return node;
+			return ref.render(this.parent);
 		}
 
-		return ref.render(_this.parent);
+		var node = this.node;
+
+		// Special case - select
+		var tagName = this.tagName;
+		var props = this.props;
+		var attrs = this.attrs;
+		var children = this.children;
+		var events = this.events;
+		var hooks = this.hooks;
+		if (tagName === "select" && (ref.props != null || ref.attrs != null)) {
+
+			renderSelect(ref);
+		}
+
+		ref.node = this.node;
+
+		// Patch / diff children
+		if (children !== ref.children) {
+			patch(node.shadowRoot ? node.shadowRoot : node, children, ref.children, this.parent);
+		}
+
+		// Patch / diff properties
+		if (props !== ref.props) {
+			patchProperties(node, ref.props, props);
+		}
+		// Patch / diff attributes
+		if (attrs !== ref.attrs) {
+			patchAttributes(node, ref.attrs, attrs);
+		}
+
+		if (events !== ref.events) {
+			// Handle events
+			if (ref.events) {
+
+				node._handler = ref;
+			} else if (events !== undefined) {
+
+				node._handler = undefined;
+			}
+		}
+		// Handle hooks
+		if (hooks !== undefined) {
+			if (hooks.updated) {
+				hooks.updated(this, node);
+			}
+		}
+
+		return node;
 	};
 
 	/**
@@ -1823,45 +1815,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	}
 
 	Element.prototype = {
-
-		/**
-   * Virtual Element
-   */
 		append: prototype_append,
-
-		/**
-   * Server side rendring
-   */
+		create: create,
 		toHTML: toHTML,
-
-		/**
-   * Render HTML
-   */
 		render: render,
-
-		/**
-   * Diff / patch
-   */
 		patch: prototype_patch,
-
-		/**
-   * Destroy a virtual node
-   */
 		destroy: destroy,
-
-		/**
-   * Detach a virtual node
-   */
 		detach: prototype_detach,
-
-		/**
-   * Check if two virtual nodes are equal
-   */
 		equalTo: equalTo,
-
-		/**
-   * Init
-   */
 		init: init
 	};
 
@@ -1878,74 +1839,65 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var prototype_mount = function prototype_mount(selector, factory, data) {
 
-		return this.glue(selector, factory, data, function (root, children) {
+		return this.apply(selector, factory, data, function (root, nodes) {
 
-			/**
-    * Normalize the child nodes
-    */
-			children = processChildren(children);
+			// Normalize the nodes
+			nodes = normalize(nodes);
 
-			/**
-    * Render child nodes and attach to the root node
-    */
-			if (children.length) {
+			// Render children
+			if (nodes.length) {
 
-				if (children.length === 1 && children[0]) {
+				if (nodes.length === 1 && nodes[0]) {
 
-					//root.appendChild(children[0].render());
-					children[0].render(null, root);
+					root.appendChild(nodes[0].render());
 				} else {
 
-					var index = 0,
-					    length = children.length;
-					for (; index < length; index += 1) {
-
+					var i = 0,
+					    len = nodes.length;
+					for (; i < len; i++) {
 						// ignore incompatible children
-						if (children[index]) {
+						if (nodes[i]) {
 
-							children[index].render(null, root);
-							//                        root.appendChild(children[index].render());
+							root.appendChild(nodes[i].render());
 						}
 					}
 				}
 			}
 
-			return children;
+			return nodes;
 		});
 	};
 
 	var unmount = function unmount(uuid) {
-		var mountContainer = this.mountContainer;
 
 		if (uuid != null) {
 
-			var prevMounted = mountContainer[uuid];
+			var mount = this.mountContainer[uuid];
 
-			// if previously mounted..
-			if (prevMounted) {
+			// if mounted..
+			if (mount) {
 
 				// Detach all children on the mounted virtual tree
-				detach(prevMounted.children);
+				detach(mount.children);
 
 				// setting 'undefined' gives better performance
-				prevMounted.root.rootID = undefined;
+				mount.root.rootID = undefined;
 
-				delete mountContainer[uuid];
+				delete this.mountContainer[uuid];
 			}
 		} else {
 
 			// Remove the world. Unmount everything.
-			for (uuid in mountContainer) {
+			for (uuid in this.mountContainer) {
 
 				this.unmount(uuid);
 			}
 		}
 	};
 
-	var updateChildren = function updateChildren(node, prevChildren, newChildren) {
-		// skip patching if the children are equal
+	var updateChildren = function updateChildren(root, prevChildren, newChildren) {
 		if (prevChildren !== newChildren) {
-			return patch(node, prevChildren, processChildren(newChildren));
+			return patch(root, prevChildren, normalize(newChildren));
 		}
 	};
 
@@ -1975,7 +1927,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 				var activeElement = document.activeElement;
 
 				if (!node) {
-					node = mount.callback;
+					node = mount.factory;
 				}
 
 				// update and re-order child nodes         
@@ -2020,9 +1972,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
-	var glue = function glue(selector, callback, container, children) {
+	var apply = function apply(selector, factory, container, children) {
 		if (container === undefined) container = {};
-		var mountContainer = this.mountContainer;
 
 		// Find the selector where we are going to mount the virtual tree
 		var root = findDOMNode(selector),
@@ -2030,11 +1981,9 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		if (root) {
 
-			var prevMounted = root.rootID || mountContainer[root];
-
 			// Unmount if already mounted
-			if (prevMounted) {
-				this.unmount(prevMounted);
+			if (root.rootID) {
+				this.unmount(root.rootID);
 			}
 
 			// use 'container' id if it exist, or...
@@ -2046,8 +1995,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
 			}
 
 			container.root = root;
-			container.callback = callback;
-			container.children = children(root, callback);
+			container.factory = factory;
+			container.children = children(root, factory);
 
 			this.mountContainer[mountId] = container;
 
@@ -2059,7 +2008,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var Tree_prototype_append = function Tree_prototype_append(selector, factory, data) {
 
-		return this.glue(selector, factory, data, append);
+		return this.apply(selector, factory, data, append);
 	};
 
 	// Generate a unique identifier
@@ -2105,63 +2054,20 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	};
 
 	var Tree = function Tree() {
-		/**
-   * Initialize the tree
-   */
+
 		this.init();
 	};
 
 	Tree.prototype = {
-
-		/**
-   * Initialize
-   */
 		init: prototype_init,
-
-		/**
-   * "Glue" / attach virtual trees or server rendered HTML markup 
-   * to a given selector
-   */
-		glue: glue,
-
-		/**
-   * Append server rendered HTML markup
-   */
+		apply: apply,
 		append: Tree_prototype_append,
-
-		/**
-   * Mount a virtual tree
-   */
 		mount: prototype_mount,
-
-		/**
-   * Unmount a virtual tree
-   */
 		unmount: unmount,
-
-		/**
-   * Update a virtual tree
-   */
 		update: update,
-
-		/**
-   * Return overview over mounted tree, or all mounted trees
-   */
 		mounted: mounted,
-
-		/**
-   * Generate a unique identifier for mounting virtual trees
-   */
 		guid: prototype_guid,
-
-		/**
-   * Returns all child nodes beloning to the mounted tree
-   */
 		children: prototype_children,
-
-		/**
-   * Return a real DOM node where the virtual tree are mounted
-   */
 		mountPoint: mountPoint
 	};
 
@@ -2252,11 +2158,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 	var capturable = {
 		"blur": true,
-		"focus": true
+		"focus": true,
+		"focus": true,
+		"mouseenter": true,
+		"mouseleave": true
 	};
 
 	var bind = function bind(evt) {
-
 
 		var handler = globalEventListener(this, evt);
 
@@ -2318,11 +2226,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
 	var commonEvents = ("blur change click contextmenu copy cut dblclick drag dragend dragenter dragexit dragleave dragover dragstart " + "drop focus input keydown keyup keypress mousedown mouseenter mouseleave mousemove mouseout mouseover mouseup paste scroll " + "submit touchcancel touchend touchmove touchstart wheel").split(" ");
 
 	var bindDefaultEvents = function bindDefaultEvents() {
-		var _this2 = this;
+		var _this = this;
 
 		each(commonEvents, function (evt) {
 
-			_this2.bind(evt);
+			_this.bind(evt);
 		});
 	};
 
@@ -2492,7 +2400,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		/**
    * Current version of the library
    */
-		version: "0.1.9"
+		version: "0.2.1"
 	};
 
 	return trackira;
@@ -2508,6 +2416,7 @@ function Benchmark() {
   this.impl = null;
   this.tests = null;
   this.reportCallback = null;
+  this.enableTests = false;
 
   this.container = document.createElement('div');
 
@@ -2557,8 +2466,8 @@ Benchmark.prototype.run = function(iterations) {
       if (self.reportCallback != null) {
         self.reportCallback(samples);
       }
-    }).start();
-  }).start();
+    }, undefined, false).start();
+  }, undefined, this.enableTests).start();
 };
 
 module.exports = Benchmark;
@@ -2566,7 +2475,52 @@ module.exports = Benchmark;
 },{"./executor":4}],4:[function(require,module,exports){
 'use strict';
 
-function Executor(impl, container, tests, iterations, cb, iterCb) {
+function render(nodes) {
+  var children = [];
+  var j;
+  var c;
+  var i;
+  var e;
+  var n;
+
+  for (i = 0; i < nodes.length; i++) {
+    n = nodes[i];
+    if (n.children !== null) {
+      e = document.createElement('div');
+      c = render(n.children);
+      for (j = 0; j < c.length; j++) {
+        e.appendChild(c[j]);
+      }
+      children.push(e);
+    } else {
+      e = document.createElement('span');
+      e.textContent = n.key.toString();
+      children.push(e);
+    }
+  }
+
+  return children;
+}
+
+function testInnerHtml(testName, nodes, container) {
+  var c = document.createElement('div');
+  var e = document.createElement('div');
+  var children = render(nodes);
+  for (var i = 0; i < children.length; i++) {
+    e.appendChild(children[i]);
+  }
+  c.appendChild(e);
+  if (c.innerHTML !== container.innerHTML) {
+    console.log('error in test: ' + testName);
+    console.log('container.innerHTML:');
+    console.log(container.innerHTML);
+    console.log('should be:');
+    console.log(c.innerHTML);
+  }
+}
+
+
+function Executor(impl, container, tests, iterations, cb, iterCb, enableTests) {
   if (iterCb === void 0) iterCb = null;
 
   this.impl = impl;
@@ -2575,6 +2529,7 @@ function Executor(impl, container, tests, iterations, cb, iterCb) {
   this.iterations = iterations;
   this.cb = cb;
   this.iterCb = iterCb;
+  this.enableTests = enableTests;
 
   this._currentTest = 0;
   this._currentIter = 0;
@@ -2625,9 +2580,18 @@ Executor.prototype.iter = function() {
       e.render();
       renderTime = window.performance.now() - t;
 
+      if (this.enableTests) {
+        testInnerHtml(test.name + 'render()', test.data.a, this.container);
+      }
+
       t = window.performance.now();
       e.update();
       updateTime = window.performance.now() - t;
+
+      if (this.enableTests) {
+        testInnerHtml(test.name + 'update()', test.data.b, this.container);
+      }
+
       e.tearDown();
 
       this._renderSamples.push(renderTime);
@@ -2671,7 +2635,7 @@ function initFromScript(scriptUrl, impl) {
   e.src = scriptUrl;
 
   e.onload = function() {
-    benchmark.tests = window.benchmarkTests();
+    benchmark.tests = window.generateBenchmarkData();
     benchmark.ready(true);
   };
 
@@ -2740,6 +2704,12 @@ function init(name, version, impl) {
   }
 
   var type = qs['type'];
+
+  if (qs['test'] !== void 0) {
+    benchmark.enableTests = true;
+    console.log('tests enabled');
+  }
+
   var id;
   if (type === 'iframe') {
     id = qs['id'];
