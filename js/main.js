@@ -1,4 +1,3 @@
-
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var benchmark = require('vdom-benchmark-base');
 var Trackira = require('trackiraa');
@@ -7,7 +6,7 @@ var Text = Trackira.Text;
 var patch = Trackira.patch;
 
 var NAME = 'Trackira';
-var VERSION = "0.2.2";
+var VERSION = "dasf";
 
 function renderTree(nodes) {
   var children = [];
@@ -339,7 +338,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		/**
    * NOTE!! 
-
    *
    * The server side rendring only works if there exist a 'parent container', and
    * child nodes as a HTML markup. E.g. <div id="mount-point"><div>Foo</div></div>
@@ -1282,7 +1280,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * Creates a mapping that can be used to look up children using a key.
   *
   * @param  {Array}  children An array of nodes.
-
   * @param  {Number} startIndex 
   * @param  {Number} endIndex 
   * @return {Object} A mapping of keys to the children of the virtual node.
@@ -1316,6 +1313,28 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		}
 	};
 
+	function buildKeys(children, idxFrom, idxTo) {
+		var res = {},
+		    child;
+
+		while (idxFrom < idxTo) {
+			child = children[idxFrom];
+			if (child.key != null) {
+				res[child.key] = idxFrom;
+			}
+			++idxFrom;
+		}
+
+		return res;
+	}
+
+	/**
+  * Update and reorder child nodes.
+  *
+  * @param {Object} container     The parent container.
+  * @param {Array}  oldChildren  The current array of children.
+  * @param {Array}  children    The new array of children to reach.
+  */
 	var patch = function patch(container, oldChildren, children, parent) {
 
 		var hasChildrenA = oldChildren && oldChildren.length,
@@ -1402,12 +1421,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		    endNode = children[endIndex],
 		    map,
 		    node;
-
+		var childrenAKeys;
 		while (oldStartIndex <= oldEndIndex && StartIndex <= endIndex) {
 
-			if (oldStartNode === undefined) {
+			if (oldStartNode == null) {
 				oldStartIndex++;
-			} else if (oldEndNode === undefined) {
+			} else if (oldEndNode == null) {
 				oldEndIndex--;
 				// Update nodes with the same key at the beginning.	
 			} else if (oldStartNode.equalTo(startNode)) {
@@ -1422,36 +1441,30 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						// Move nodes from left to right.
 					} else if (oldStartNode.equalTo(endNode)) {
 							oldStartNode.patch(endNode);
-
 							container.insertBefore(oldStartNode.node, oldEndNode.node.nextSibling);
-
 							oldStartIndex++;
-
 							endIndex--;
 
 							// Move nodes from right to left.	
 						} else if (oldEndNode.equalTo(startNode)) {
-
 								oldEndNode.patch(startNode);
 								container.insertBefore(oldEndNode.node, oldStartNode.node);
 								oldEndIndex--;
 								StartIndex++;
 							} else {
 
-								if (map === undefined) {
-									map = keyMapping(oldChildren, oldStartIndex, oldEndIndex);
-								}
+								map || (map = buildKeys(oldChildren, oldStartIndex, oldEndIndex));
 
 								index = map[startNode.key];
 
-								if (index === undefined) {
+								if (index != null) {
 									// create a new element
-									container.insertBefore(startNode.render(parent), oldStartNode.node);
-								} else {
 									node = oldChildren[index];
+									oldChildren[index] = null;
 									node.patch(startNode);
-									oldChildren[index] = undefined;
 									container.insertBefore(node.node, oldStartNode.node);
+								} else {
+									container.insertBefore(startNode.render(parent), oldStartNode.node);
 								}
 
 								StartIndex++;
@@ -1464,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		if (oldStartIndex > oldEndIndex) {
 
 			for (; StartIndex <= endIndex; StartIndex++) {
-				if (children[endIndex + 1] === undefined) {
+				if (children[endIndex + 1] == null) {
 					container.appendChild(children[StartIndex].render());
 				} else {
 					container.insertBefore(children[StartIndex].render(), children[endIndex + 1].node);
@@ -1473,7 +1486,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 		} else if (StartIndex > endIndex) {
 
 			for (; oldStartIndex <= oldEndIndex; oldStartIndex++) {
-				if (oldChildren[oldStartIndex] !== undefined) {
+				if (oldChildren[oldStartIndex] != null) {
 					oldChildren[oldStartIndex].detach();
 				}
 			}
@@ -1607,7 +1620,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						node.setAttribute(attrName, attrValue);
 						node[attrName] = attrValue ? attrValue : "";
 					} else if (attrValue != null) {
-
 
 						node.setAttribute(attrName, attrValue);
 					}
@@ -2696,7 +2708,6 @@ function init(name, version, impl) {
     }
     return b;
   })(window.location.search.substr(1).split('&'));
-
 
   if (qs['name'] !== void 0) {
     name = qs['name'];
