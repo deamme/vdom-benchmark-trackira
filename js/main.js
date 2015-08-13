@@ -1,3 +1,4 @@
+
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var benchmark = require('vdom-benchmark-base');
 var Trackira = require('trackiraa');
@@ -338,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 		/**
    * NOTE!! 
+
    *
    * The server side rendring only works if there exist a 'parent container', and
    * child nodes as a HTML markup. E.g. <div id="mount-point"><div>Foo</div></div>
@@ -1280,6 +1282,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   * Creates a mapping that can be used to look up children using a key.
   *
   * @param  {Array}  children An array of nodes.
+
   * @param  {Number} startIndex 
   * @param  {Number} endIndex 
   * @return {Object} A mapping of keys to the children of the virtual node.
@@ -1604,6 +1607,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 						node.setAttribute(attrName, attrValue);
 						node[attrName] = attrValue ? attrValue : "";
 					} else if (attrValue != null) {
+
 
 						node.setAttribute(attrName, attrValue);
 					}
@@ -2692,6 +2696,7 @@ function init(name, version, impl) {
     }
     return b;
   })(window.location.search.substr(1).split('&'));
+
 
   if (qs['name'] !== void 0) {
     name = qs['name'];
