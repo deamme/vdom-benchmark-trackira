@@ -5,7 +5,7 @@ var Element = jiesa.Element;
 var Text = jiesa.Text;
 
 var NAME = 'jiesa (prev. Trackira)';
-var VERSION = "0.0.1";
+var VERSION = "0.0.6";
 
 function renderTree(nodes) {
   var children = [];
