@@ -4,8 +4,8 @@ var jiesa = require('trackiraa');
 var Element = jiesa.Element;
 var Text = jiesa.Text;
 
-var NAME = 'jiesa (prev. Trackira)';
-var VERSION = "0.0.6";
+var NAME = 'jiesa ( Trackira)';
+var VERSION = "0.0.7c";
 
 function renderTree(nodes) {
   var children = [];
@@ -17,7 +17,7 @@ function renderTree(nodes) {
     if (n.children !== null) {
       children.push(new Element("div", { key: n.key }, renderTree(n.children)));
     } else {
-      children.push(new Element("span", { key: n.key }, [new Text(n.key.toString())]));
+      children.push(new Element("span", null, [ new Text(n.key.toString() )] ));
     }
   }
 
@@ -56,2591 +56,2586 @@ document.addEventListener('DOMContentLoaded', function(e) {
 },{"trackiraa":2,"vdom-benchmark-base":5}],2:[function(require,module,exports){
 /**
  * jiesa - 
- * @Version: v0.0.6
+ * @Version: v0.0.7b
  * @Author: Kenny Flashlight
  * @Homepage: 
  * @License: MIT
  */
 (function (global, factory) {
-         typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.jiesa = factory();
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.jiesa = factory();
 })(this, function () {
-         'use strict';
-
-         var ESCAPE_REGEX = /[&><]/g,
-
-         // `"` and `'` are not escaped; they are parsed as regular characters in the
-         // context of text content.
-
-         ESCAPE_LOOKUP = {
-                  "&": "&amp;",
-                  ">": "&gt;",
-                  "<": "&lt;"
-         };
-
-         var escapeHtml = function escapeHtml(value) {
-                  return ("" + value).replace(ESCAPE_REGEX, function (match) {
-                           return ESCAPE_LOOKUP[match];
-                  });
-         };
-
-         var flag = {
-                  ELEMENT: 0x0001,
-                  TEXT: 0x0002
-         };
-
-         /**
-          * Initialize a new `Text`.
-          * @param {String} text
-          */
-         function Text(text) {
-
-                  /**
-                   * The text content of a Text node.
-                   */
-                  this.data = text;
-                  this.node = null;
-         }
-
-         // Shortcut to improve speed and size
-         var Text__proto = Text.prototype;
-
-         /**
-          * The type, used to identify the type of this node
-          */
-         Text__proto.flag = flag.TEXT;
-
-         Text__proto.create = function () {
-
-                  if (this.node == null) {
-
-                           this.node = document.createTextNode(this.data);
-                  }
-
-                  return this.node;
-         };
-
-         /**
-          * Render a virtual text node
-          *
-          * @return Object
-          */
-         Text__proto.render = function () {
-
-                  return this.create();
-         };
+    'use strict';
+
+    var ESCAPE_REGEX = /[&><]/g,
+
+    // `"` and `'` are not escaped; they are parsed as regular characters in the
+    // context of text content.
+
+    ESCAPE_LOOKUP = {
+        "&": "&amp;",
+        ">": "&gt;",
+        "<": "&lt;"
+    };
+
+    var escapeHtml = function escapeHtml(value) {
+        return ("" + value).replace(ESCAPE_REGEX, function (match) {
+            return ESCAPE_LOOKUP[match];
+        });
+    };
+
+    /**
+     * Initialize a new `Text`.
+     * @param {String} text
+     */
+    function Text(text) {
+
+        /**
+         * The text content of a Text node.
+         */
+        this.data = text;
+        this.node = null;
+    }
+
+    // Shortcut to improve speed and size
+    var Text__proto = Text.prototype;
+
+    /**
+     * The type, used to identify the type of this node
+     */
+    Text__proto.flag = 0x0002;
+
+    Text__proto.create = function () {
+
+        var node = this.node;
+
+        if (node == null) {
+
+            this.node = node = document.createTextNode(this.data);
+        }
+
+        return node;
+    };
+
+    /**
+     * Render a virtual text node
+     *
+     * @return Object
+     */
+    Text__proto.render = function () {
+
+        return this.create();
+    };
 
-         /**
-          * Attaches an existing textual DOM element.
-          *
-          * @param  {Object} node
-          * @return {Object}
-          */
-         Text__proto.append = function (node) {
-
-                  return this.node = node;
-         };
-
-         /**
-          * Creates an html markup of the text node. This node is not intended to have
-          * any features besides containing text content. 
-          *
-          * Note! The text node will only be escaped if a boolean ( true ) are passed in as
-          * the first argument.
-          *
-          * @param {Boolean} escape
-          *
-          */
-         Text__proto.toHtml = function (escape) {
-
-                  return escape ? this.data : escapeHtml(this.data);
-         };
-
-         /**
-          * Checks if two virtual text nodes are equal to each other, and they can be updated.
-          *
-          * @param {Object} to
-          * @return {boolean}
-          */
-         Text__proto.equalTo = function (node) {
-
-                  return this.flag === node.flag;
-         };
-
-         /**
-          * Patches the node by updating the nodeValue.
-          *
-          * @param {object} to Contains the next text content.
-          * @return {Object}
-          */
-         Text__proto.patch = function (ref) {
-
-                  if (this.equalTo(ref)) {
-
-                           ref.node = this.node;
-
-                           if (this.data !== ref.data) {
-
-                                    this.node.data = ref.data;
-                           }
-
-                           return this.node;
-                  }
-
-                  // detach previous node
-                  this.detach(false);
-
-                  // re-render
-                  return ref.render();
-         };
-
-         /**
-          * Destroys the text node attached to the virtual node.
-          */
-         Text__proto.destroy = function () {
-
-                  var node = this.node;
-
-                  if (node.parentNode) {
-
-                           node.parentNode.removeChild(node);
-                  }
-         };
-
-         /**
-          * Removes the DOM node attached to the virtual node.
-          */
-         Text__proto.detach = function (shouldDestroy) {
-
-                  if (shouldDestroy !== false) {
-
-                           this.destroy();
-                  }
-         };
-
-         var forIn = function forIn(obj, cb) {
-
-                  if (obj) {
-
-                           var index = 0,
-                               props = Object.keys(obj),
-                               length = props.length;
-
-                           for (; index < length; ++index) {
-
-                                    cb(props[index], obj[props[index]]);
-                           }
-                  }
-                  return obj;
-         };
-
-         /**
-          * Support style names that may come passed in prefixed by adding permutations
-          * of vendor prefixes.
-          */
-         var prefixes = ["Webkit", "O", "Moz", "ms"];
-
-         /**
-          * @param {string} prefix vendor-specific prefix, eg: Webkit
-          * @param {string} key style name, eg: transitionDuration
-          * @return {string} style name prefixed with `prefix`, properly camelCased, eg:
-          * WebkitTransitionDuration
-          */
-         var prefixKey = function prefixKey(prefix, key) {
-                  return prefix + key.charAt(0).toUpperCase() + key.substring(1);
-         };
-
-         /**
-          * CSS properties which accept numbers but are not in units of "px".
-          */
-         var unitlessCfg__unitless = {
-                  animationIterationCount: true,
-                  boxFlex: true,
-                  boxFlexGroup: true,
-                  boxOrdinalGroup: true,
-                  counterRreset: true,
-                  counterIncrement: true,
-                  columnCount: true,
-                  flex: true,
-                  flexGrow: true,
-                  flexPositive: true,
-                  flexShrink: true,
-                  flexNegative: true,
-                  flexOrder: true,
-                  float: true,
-                  fontWeight: true,
-                  lineClamp: true,
-                  lineHeight: true,
-                  opacity: true,
-                  order: true,
-                  orphans: true,
-                  pitchRange: true,
-                  richness: true,
-                  stress: true,
-                  tabSize: true,
-                  volume: true,
-                  widows: true,
-                  zIndex: true,
-                  zoom: true,
-
-                  // SVG-related properties
-                  stopOpacity: true,
-                  fillOpacity: true,
-                  strokeDashoffset: true,
-                  strokeOpacity: true,
-                  strokeWidth: true
-         };
-
-         // convert to vendor prefixed unitless CSS properties
-         forIn(unitlessCfg__unitless, function (prop, value) {
-
-                  prefixes.forEach(function (prefix) {
-
-                           unitlessCfg__unitless[prefixKey(prefix, prop)] = value;
-                  });
-         });
-
-         /**
-          * Common snake-cased CSS properties
-          */
-         forIn({
-                  "animation-iteration-count": true,
-                  "box-flex": true,
-                  "box-flex-group": true,
-                  "box-ordinal-group": true,
-                  "counter-reset": true,
-                  "counter-increment": true,
-                  "column-count": true,
-                  "flex-grow": true,
-                  "flex-positive": true,
-                  "flex-shrink": true,
-                  "flex-negative": true,
-                  "flex-order": true,
-                  "font-weight": true,
-                  "line-clamp": true,
-                  "line-height": true,
-
-                  // SVG-related properties
-                  "stop-opacity": true,
-                  "fill-opacity": true,
-                  "stroke-dashoffset": true,
-                  "stroke-opacity": true,
-                  "stroke-width": true
-         }, function (prop) {
-
-                  prefixes.forEach(function (prefix, value) {
-
-                           unitlessCfg__unitless[prop] = value;
-                  });
-         });
-
-         var unitlessCfg = unitlessCfg__unitless;
-
-         var cleanValues = function cleanValues(name, value) {
-
-                  if (value == null || value === "") {
-
-                           return "";
-                  }
-
-                  if (value === 0 || (unitlessCfg[name] || isNaN(value))) {
-
-                           return "" + value; // cast to string
-                  }
-
-                  if (typeof value === "string" || value instanceof Date) {
+    /**
+     * Attaches an existing textual DOM element.
+     *
+     * @param  {Object} node
+     * @return {Object}
+     */
+    Text__proto.append = function (node) {
+
+        return this.node = node;
+    };
+
+    /**
+     * Creates an html markup of the text node. This node is not intended to have
+     * any features besides containing text content. 
+     *
+     * Note! The text node will only be escaped if a boolean ( true ) are passed in as
+     * the first argument.
+     *
+     * @param {Boolean} escape
+     *
+     */
+    Text__proto.toHtml = function (escape) {
+
+        return escape ? this.data : escapeHtml(this.data);
+    };
+
+    /**
+     * Checks if two virtual text nodes are equal to each other, and they can be updated.
+     *
+     * @param {Object} to
+     * @return {boolean}
+     */
+    Text__proto.equalTo = function (node) {
+
+        return this.flag === node.flag;
+    };
+
+    /**
+     * Patches the node by updating the nodeValue.
+     *
+     * @param {object} to Contains the next text content.
+     * @return {Object}
+     */
+    Text__proto.patch = function (ref) {
+
+        if (this.equalTo(ref)) {
+
+            ref.node = this.node;
+
+            if (this.data !== ref.data) {
+
+                this.node.data = ref.data;
+            }
+
+            return this.node;
+        }
+
+        // detach previous node
+        this.detach(false);
+
+        // re-render
+        return ref.render();
+    };
+
+    /**
+     * Destroys the text node attached to the virtual node.
+     */
+    Text__proto.destroy = function () {
+
+        var node = this.node,
+            parent = node.parentNode;
+
+        if (parent) {
+
+            parent.removeChild(node);
+        }
+    };
+
+    /**
+     * Removes the DOM node attached to the virtual node.
+     */
+    Text__proto.detach = function (shouldDestroy) {
+
+        if (shouldDestroy !== false) {
+
+            this.destroy();
+        }
+    };
+
+    var forIn = function forIn(obj, cb) {
+
+        if (obj) {
+
+            var index = 0,
+                props = Object.keys(obj),
+                length = props.length;
+
+            for (; index < length; ++index) {
+
+                cb(props[index], obj[props[index]]);
+            }
+        }
+        return obj;
+    };
+
+    /**
+     * Support style names that may come passed in prefixed by adding permutations
+     * of vendor prefixes.
+     */
+    var prefixes = ["Webkit", "O", "Moz", "ms"];
+
+    /**
+     * @param {string} prefix vendor-specific prefix, eg: Webkit
+     * @param {string} key style name, eg: transitionDuration
+     * @return {string} style name prefixed with `prefix`, properly camelCased, eg:
+     * WebkitTransitionDuration
+     */
+    var prefixKey = function prefixKey(prefix, key) {
+        return prefix + key.charAt(0).toUpperCase() + key.substring(1);
+    };
+
+    /**
+     * CSS properties which accept numbers but are not in units of "px".
+     */
+    var unitlessCfg__unitless = {
+        animationIterationCount: true,
+        boxFlex: true,
+        boxFlexGroup: true,
+        boxOrdinalGroup: true,
+        counterRreset: true,
+        counterIncrement: true,
+        columnCount: true,
+        flex: true,
+        flexGrow: true,
+        flexPositive: true,
+        flexShrink: true,
+        flexNegative: true,
+        flexOrder: true,
+        float: true,
+        fontWeight: true,
+        lineClamp: true,
+        lineHeight: true,
+        opacity: true,
+        order: true,
+        orphans: true,
+        pitchRange: true,
+        richness: true,
+        stress: true,
+        tabSize: true,
+        volume: true,
+        widows: true,
+        zIndex: true,
+        zoom: true,
+
+        // SVG-related properties
+        stopOpacity: true,
+        fillOpacity: true,
+        strokeDashoffset: true,
+        strokeOpacity: true,
+        strokeWidth: true
+    };
+
+    // convert to vendor prefixed unitless CSS properties
+    forIn(unitlessCfg__unitless, function (prop, value) {
+
+        prefixes.forEach(function (prefix) {
+
+            unitlessCfg__unitless[prefixKey(prefix, prop)] = value;
+        });
+    });
+
+    /**
+     * Common snake-cased CSS properties
+     */
+    forIn({
+        "animation-iteration-count": true,
+        "box-flex": true,
+        "box-flex-group": true,
+        "box-ordinal-group": true,
+        "counter-reset": true,
+        "counter-increment": true,
+        "column-count": true,
+        "flex-grow": true,
+        "flex-positive": true,
+        "flex-shrink": true,
+        "flex-negative": true,
+        "flex-order": true,
+        "font-weight": true,
+        "line-clamp": true,
+        "line-height": true,
+
+        // SVG-related properties
+        "stop-opacity": true,
+        "fill-opacity": true,
+        "stroke-dashoffset": true,
+        "stroke-opacity": true,
+        "stroke-width": true
+    }, function (prop) {
+
+        prefixes.forEach(function (prefix, value) {
+
+            unitlessCfg__unitless[prop] = value;
+        });
+    });
+
+    var unitlessCfg = unitlessCfg__unitless;
+
+    var cleanValues = function cleanValues(name, value) {
+
+        if (value == null || value === "") {
+
+            return "";
+        }
+
+        if (value === 0 || (unitlessCfg[name] || isNaN(value))) {
+
+            return "" + value; // cast to string
+        }
+
+        if (typeof value === "string" || value instanceof Date) {
+
+            value = value.trim();
+        }
+
+        return value + "px";
+    };
 
-                           value = value.trim();
-                  }
+    var isArray = function isArray(value) {
+        return value.constructor === Array;
+    };
 
-                  return value + "px";
-         };
+    /**
+     * Set CSS styles
+     *
+     * @param {Object} node
+     * @param {String} propertyName
+     * @param {String} value
+     */
+    var setObjStyle = function setObjStyle(node, propertyName, value) {
 
-         var isArray = function isArray(value) {
-                  return value.constructor === Array;
-         };
+        var idx = 0,
+            len = undefined,
+            style = node[propertyName];
 
-         /**
-          * Set CSS styles
-          *
-          * @param {Object} node
-          * @param {String} propertyName
-          * @param {String} value
-          */
-         var setObjStyle = function setObjStyle(node, propertyName, value) {
+        forIn(value, function (styleName, styleValue) {
 
-                  var idx = 0,
-                      len = undefined,
-                      style = node[propertyName];
+            if (styleValue != null) {
 
-                  forIn(value, function (styleName, styleValue) {
+                if (isArray(styleValue)) {
 
-                           if (styleValue != null) {
+                    for (len = styleValue.length; idx < len; idx++) {
 
-                                    if (isArray(styleValue)) {
+                        style[styleName] = cleanValues(styleName, styleValue[idx]);
+                    }
+                } else {
 
-                                             for (len = styleValue.length; idx < len; idx++) {
+                    style[styleName] = cleanValues(styleName, styleValue);
+                }
+            } else {
 
-                                                      style[styleName] = cleanValues(styleName, styleValue[idx]);
-                                             }
-                                    } else {
+                style[styleName] = "";
+            }
+        });
+    };
 
-                                             style[styleName] = cleanValues(styleName, styleValue);
-                                    }
-                           } else {
+    var removeSelectValue = function removeSelectValue(node) {
 
-                                    style[styleName] = "";
-                           }
-                  });
-         };
+        var options = node.options,
+            len = options.length;
+        // skip iteration if no length
+        if (len) {
 
-         var removeSelectValue = function removeSelectValue(node) {
+            var i = 0;
 
-                  var options = node.options,
-                      len = options.length;
-                  // skip iteration if no length
-                  if (len) {
+            while (i < len) {
 
-                           var i = 0;
+                options[i++].selected = false;
+            }
+        }
+    };
 
-                           while (i < len) {
+    var removeProp__defaultPropVals = {};
 
-                                    options[i++].selected = false;
-                           }
-                  }
-         };
+    function getDefaultPropVal(tag, attrName) {
 
-         var removeProp__defaultPropVals = {};
+        var tagAttrs = removeProp__defaultPropVals[tag] || (removeProp__defaultPropVals[tag] = {});
+        return attrName in tagAttrs ? tagAttrs[attrName] : tagAttrs[attrName] = document.createElement(tag)[attrName];
+    }
 
-         function getDefaultPropVal(tag, attrName) {
+    var removeProp = function removeProp(node, name) {
 
-                  var tagAttrs = removeProp__defaultPropVals[tag] || (removeProp__defaultPropVals[tag] = {});
-                  return attrName in tagAttrs ? tagAttrs[attrName] : tagAttrs[attrName] = document.createElement(tag)[attrName];
-         }
+        if (name === "value" && node.tagName === "SELECT") {
 
-         var removeProp = function removeProp(node, name) {
+            removeSelectValue(node);
+        } else {
 
-                  if (name === "value" && node.tagName === "SELECT") {
+            node[name] = getDefaultPropVal(node.tagName, name);
+        }
+    };
 
-                           removeSelectValue(node);
-                  } else {
+    var inArray = function inArray(arr, item) {
 
-                           node[name] = getDefaultPropVal(node.tagName, name);
-                  }
-         };
+        var len = arr.length;
 
-         var inArray = function inArray(arr, item) {
+        var i = 0;
 
-                  var len = arr.length;
+        while (i < len) {
 
-                  var i = 0;
+            if (arr[i++] == item) {
 
-                  while (i < len) {
+                return true;
+            }
+        }
 
-                           if (arr[i++] == item) {
+        return false;
+    };
 
-                                    return true;
-                           }
-                  }
+    var setSelectValue = function setSelectValue(node, value) {
 
-                  return false;
-         };
+        var isMultiple = isArray(value),
+            options = node.options,
+            len = options.length;
 
-         var setSelectValue = function setSelectValue(node, value) {
+        var i = 0,
+            optionNode = undefined;
 
-                  var isMultiple = isArray(value),
-                      options = node.options,
-                      len = options.length;
+        if (value != null) {
 
-                  var i = 0,
-                      optionNode = undefined;
+            while (i < len) {
 
-                  if (value != null) {
+                optionNode = options[i++];
 
-                           while (i < len) {
+                if (isMultiple) {
 
-                                    optionNode = options[i++];
+                    optionNode.selected = inArray(value, optionNode.value);
+                } else {
 
-                                    if (isMultiple) {
+                    optionNode.selected = optionNode.value == value;
+                }
+            }
+        }
+    };
 
-                                             optionNode.selected = inArray(value, optionNode.value);
-                                    } else {
+    var setPropWithCheck = function setPropWithCheck(node, name, value) {
 
-                                             optionNode.selected = optionNode.value == value;
-                                    }
-                           }
-                  }
-         };
+        if (name === "value" && node.tagName === "SELECT") {
 
-         var setPropWithCheck = function setPropWithCheck(node, name, value) {
+            setSelectValue(node, value);
+        } else {
 
-                  if (name === "value" && node.tagName === "SELECT") {
+            if (node[name] !== value) {
 
-                           setSelectValue(node, value);
-                  } else {
+                node[name] = value;
+            }
+        }
+    };
 
-                           if (node[name] !== value) {
+    var setBooleanProp = function setBooleanProp(node, propertyName, propertyValue) {
 
-                                    node[name] = value;
-                           }
-                  }
-         };
+        node[propertyName] = !!propertyValue;
+    };
 
-         var setBooleanProp = function setBooleanProp(node, propertyName, propertyValue) {
+    var boolPropCfg = {
+        set: setBooleanProp,
+        remove: removeProp
+    };
 
-                  node[propertyName] = !!propertyValue;
-         };
+    var setProp = function setProp(node, propertyName, propertyValue) {
+
+        node[propertyName] = propertyValue;
+    };
+
+    var defaultPropCfg = {
+        set: setProp,
+        remove: removeProp
+    };
+
+    var removeAttr = function removeAttr(node, name) {
+
+        node.removeAttribute(name);
+    };
+
+    var setBooleanAttr = function setBooleanAttr(node, name, attrValue) {
+
+        // don't set falsy values!
+        if (attrValue !== false) {
+
+            // booleans should always be lower cased
+            node.setAttribute(name, "" + (attrValue == true ? "" : attrValue).toLowerCase());
+        }
+    };
+
+    var boolAttrCfg = {
+        set: setBooleanAttr,
+        remove: removeAttr
+    };
+
+    var xmlCfg = {
+        "xml:base": "base",
+        "xml:id": "id",
+        "xml:lang": "lang",
+        "xml:space": "space"
+    };
+
+    var xmlAttrCfg = {
+        set: function set(node, key, value) {
+
+            node.setAttributeNS("http://www.w3.org/XML/1998/namespace", xmlCfg[key], "" + value);
+        },
+        remove: function remove(node, key) {
+
+            node.removeAttributeNS("http://www.w3.org/XML/1998/namespace", xmlCfg[key]);
+        }
+    };
 
-         var boolPropCfg = {
-                  set: setBooleanProp,
-                  remove: removeProp
-         };
+    var xlinkCfg = {
+        "xlink:actuate": "actuate",
+        "xlink:arcrole": "arcrole",
+        "xlink:href": "href",
+        "xlink:role": "role",
+        "xlink:show": "show",
+        "xlink:title": "title",
+        "xlink:type": "type"
+    };
 
-         var setProp = function setProp(node, propertyName, propertyValue) {
+    var xlinkAttrCfg = {
+        set: function set(node, key, value) {
 
-                  node[propertyName] = propertyValue;
-         };
-
-         var defaultPropCfg = {
-                  set: setProp,
-                  remove: removeProp
-         };
-
-         var removeAttr = function removeAttr(node, name) {
-
-                  node.removeAttribute(name);
-         };
-
-         var setBooleanAttr = function setBooleanAttr(node, name, attrValue) {
-
-                  // don't set falsy values!
-                  if (attrValue !== false) {
-
-                           // booleans should always be lower cased
-                           node.setAttribute(name, "" + (attrValue == true ? "" : attrValue).toLowerCase());
-                  }
-         };
-
-         var boolAttrCfg = {
-                  set: setBooleanAttr,
-                  remove: removeAttr
-         };
-
-         var xmlCfg = {
-                  "xml:base": "base",
-                  "xml:id": "id",
-                  "xml:lang": "lang",
-                  "xml:space": "space"
-         };
-
-         var xmlAttrCfg = {
-                  set: function set(node, key, value) {
-
-                           node.setAttributeNS("http://www.w3.org/XML/1998/namespace", xmlCfg[key], "" + value);
-                  },
-                  remove: function remove(node, key) {
-
-                           node.removeAttributeNS("http://www.w3.org/XML/1998/namespace", xmlCfg[key]);
-                  }
-         };
+            node.setAttributeNS("http://www.w3.org/1999/xlink", xlinkCfg[key], "" + value);
+        },
+        remove: function remove(node, key) {
 
-         var xlinkCfg = {
-                  "xlink:actuate": "actuate",
-                  "xlink:arcrole": "arcrole",
-                  "xlink:href": "href",
-                  "xlink:role": "role",
-                  "xlink:show": "show",
-                  "xlink:title": "title",
-                  "xlink:type": "type"
-         };
+            node.removeAttributeNS("http://www.w3.org/1999/xlink", xlinkCfg[key]);
+        }
+    };
 
-         var xlinkAttrCfg = {
-                  set: function set(node, key, value) {
+    /**
+     * Boolean attributes
+     * Shared between HTML attributes and SSR
+     */
+    var boolAttrs = ("multiple allowFullScreen loop muted controls seamless itemScope async nowrap inert required noresize " + "translate truespeed typemustmatch sortable reversed autoplay nohref defaultselected defaultchecked " + "noshade indeterminate draggable defaultSelected defaultChecked compact itemscope").split(" ");
 
-                           node.setAttributeNS("http://www.w3.org/1999/xlink", xlinkCfg[key], "" + value);
-                  },
-                  remove: function remove(node, key) {
+    /**
+     * Boolean properties
+     * Shared between HTML properties and SSR
+     */
+    var boolProps = ("multiple allowFullScreen async inert autofocus autoplay checked controls defer disabled enabled formNoValidate " + "loop muted noValidate open readOnly required scoped seamless selected itemScope translate " + "truespeed typemustmatch defaultSelected sortable reversed nohref noresize noshade indeterminate draggable " + "hidden defaultSelected defaultChecked compact autoplay itemscope formNoValidate").split(" ");
+
+    /**
+     * xlink namespace attributes
+     * Shared between HTML attributes and SSR
+     */
+    var xlinkAttrs = "xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type".split(" ");
+
+    /**
+     * XML namespace attributes
+     * Shared between HTML attributes and SSR
+     */
+    var xmlAttrs = "xml:base xml:id xml:lang xml:space".split(" ");
+
+    /************************** WARNING!! **********************************
+     *  Don't do any changes here except if you know what you are          *
+     *  doing. This list controlls wich attributes has to be set as an     *
+     *  HTML property, HTML boolean attribute or a HTML boolean property   *
+     ***********************************************************************/
+    var attrsCfg__attrsCfg = {
+        style: {
+            set: setObjStyle,
+            remove: removeProp
+        },
+        value: {
+            set: setPropWithCheck,
+            remove: removeProp
+        }
+    };
+
+    // Default properties
+    ("srcset enctype autocomplete htmlFor className paused placeholder playbackRate radiogroup currentTime srcObject tabIndex volume srcDoc " + "mediagroup kind label default").split(" ").forEach(function (prop) {
+
+        attrsCfg__attrsCfg[prop] = defaultPropCfg;
+    });
+
+    // Boolean properties
+    boolProps.forEach(function (prop) {
+
+        attrsCfg__attrsCfg[prop] = boolPropCfg;
+    });
+
+    /**
+     * Boolean attributes
+     *
+     * We need to do a 'concat' here and merge with a few other boolean attributes not used for
+     * 'SSR' to avoid this attributes to be rendered server side as boolean properties.
+     */
+    boolAttrs.concat(("checked disabled enabled selected hidden noResize " + "allowfullscreen declare spellcheck open autofocus").split(" ")).forEach(function (prop) {
+
+        attrsCfg__attrsCfg[prop.toLowerCase()] = boolAttrCfg;
+    });
+
+    // xlink namespace attributes
+    xlinkAttrs.forEach(function (prop) {
+
+        attrsCfg__attrsCfg[prop] = xlinkAttrCfg;
+    });
+
+    // xml namespace attributes
+    xmlAttrs.forEach(function (prop) {
+
+        attrsCfg__attrsCfg[prop] = xmlAttrCfg;
+    });
+
+    var attrsCfg__default = attrsCfg__attrsCfg;
+
+    var setAttributes = function setAttributes(node, name, val) {
+
+        if (name === "type" && node.tagName === "INPUT") {
+
+            var value = node.value; // value will be lost in IE if type is changed
+            node.setAttribute(name, "" + val);
+            node.value = value;
+        } else {
+
+            node.setAttribute(name, "" + val);
+        }
+    };
+
+    var defaultAttrCfg = {
+        set: setAttributes,
+        remove: removeAttr
+    };
+
+    var DOMAttrCfg = function DOMAttrCfg(attrName) {
+
+        return attrsCfg__default[attrName] || defaultAttrCfg;
+    };
+
+    /************************** WARNING!! **********************************
+     *  Don't do any changes here except if you know what you are          *
+     *  doing. This list controlls wich properties has to be set as an     *
+     *  HTML attributes, HTML boolean attribute or a HTML boolean property *
+     ***********************************************************************/
+
+    var propsCfg__propCfg = {
+        style: {
+            set: setObjStyle,
+            remove: removeProp
+        },
+        value: {
+            set: setPropWithCheck,
+            remove: removeProp
+        }
+    };
+
+    // Boolean attributes
+    "paused spellcheck".split(" ").forEach(function (prop) {
+
+        propsCfg__propCfg[prop] = boolAttrCfg;
+    });
+
+    // Boolean properties
+    boolProps.forEach(function (prop) {
+
+        propsCfg__propCfg[prop] = boolPropCfg;
+    });
+
+    // Default attributes
+    ("allowTransparency challenge charSet class classID cols contextMenu dateTime dominantBaseline form formAction formEncType " + "formMethod formTarget height keyParams keyType list manifest media role rows size sizes srcset " + "action enctype method novalidate scrolling width wmode " +
+    // IE-only attribute that specifies security restrictions on an iframe
+    // as an alternative to the sandbox attribute on IE<10
+    "security " +
+    // itemProp, itemScope, itemType are for
+    // Microdata support. See http://schema.org/docs/gs.html
+    "itemProp itemType inputMode inlist datatype prefix " +
+    // property is supported for OpenGraph in meta tags.
+    "property " + "resource rev typeof vocab about for " +
+    // itemID and itemRef are for Microdata support as well but
+    // only specified in the the WHATWG spec document. See
+    // https://html.spec.whatwg.org/multipage/microdata.html#microdata-dom-api
+    "itemID itemRef " +
+    // All SVG attributes are supported if set as an attribute. This few attributes are added just to
+    // prevent stupidity if anyone are trying to set them as properties
+    "cursor cx cy d dx dy r rx ry viewBox transform r rx ry version y y1 y2 x1 x2 offset opacity points" +
+    // IE-only attribute that controls focus behavior
+    "unselectable" + "role rows size sizes srcSet").split(" ").forEach(function (prop) {
+
+        propsCfg__propCfg[prop] = defaultAttrCfg;
+    });
+
+    var propsCfg = propsCfg__propCfg;
+
+    var DOMPropsCfg = function DOMPropsCfg(propName) {
+
+        return propsCfg[propName] || defaultPropCfg;
+    };
+
+    /**
+     * Normalize virtual nodes
+     * @param  {Object|Function|Array} children
+     * @return {Object} Array wrapped child object
+     */
+    var normalizeChildren = function normalizeChildren(children) {
+
+        // all 'jiesa nodes' has a 'flag. So quickly wrap the child
+        // in brackets, and return.
+
+        if (children.flag) {
 
-                           node.removeAttributeNS("http://www.w3.org/1999/xlink", xlinkCfg[key]);
-                  }
-         };
+            return [children];
+        }
 
-         /**
-          * Boolean attributes
-          * Shared between HTML attributes and SSR
-          */
-         var boolAttrs = ("multiple allowFullScreen loop muted controls seamless itemScope async nowrap inert required noresize " + "translate truespeed typemustmatch sortable reversed autoplay nohref defaultselected defaultchecked " + "noshade indeterminate draggable defaultSelected defaultChecked compact itemscope").split(" ");
+        // factory
+        if (typeof children === "function") {
 
-         /**
-          * Boolean properties
-          * Shared between HTML properties and SSR
-          */
-         var boolProps = ("multiple allowFullScreen async inert autofocus autoplay checked controls defer disabled enabled formNoValidate " + "loop muted noValidate open readOnly required scoped seamless selected itemScope translate " + "truespeed typemustmatch defaultSelected sortable reversed nohref noresize noshade indeterminate draggable " + "hidden defaultSelected defaultChecked compact autoplay itemscope formNoValidate").split(" ");
+            children = children(children);
 
-         /**
-          * xlink namespace attributes
-          * Shared between HTML attributes and SSR
-          */
-         var xlinkAttrs = "xlink:actuate xlink:arcrole xlink:href xlink:role xlink:show xlink:title xlink:type".split(" ");
-
-         /**
-          * XML namespace attributes
-          * Shared between HTML attributes and SSR
-          */
-         var xmlAttrs = "xml:base xml:id xml:lang xml:space".split(" ");
+            return [children];
+        }
 
-         /************************** WARNING!! **********************************
-          *  Don't do any changes here except if you know what you are          *
-          *  doing. This list controlls wich attributes has to be set as an     *
-          *  HTML property, HTML boolean attribute or a HTML boolean property   *
-          ***********************************************************************/
-         var attrsCfg__attrsCfg = {
-                  style: {
-                           set: setObjStyle,
-                           remove: removeProp
-                  },
-                  value: {
-                           set: setPropWithCheck,
-                           remove: removeProp
-                  }
-         };
-
-         // Default properties
-         ("srcset enctype autocomplete htmlFor className paused placeholder playbackRate radiogroup currentTime srcObject tabIndex volume srcDoc " + "mediagroup kind label default").split(" ").forEach(function (prop) {
-
-                  attrsCfg__attrsCfg[prop] = defaultPropCfg;
-         });
-
-         // Boolean properties
-         boolProps.forEach(function (prop) {
-
-                  attrsCfg__attrsCfg[prop] = boolPropCfg;
-         });
-
-         /**
-          * Boolean attributes
-          *
-          * We need to do a 'concat' here and merge with a few other boolean attributes not used for
-          * 'SSR' to avoid this attributes to be rendered server side as boolean properties.
-          */
-         boolAttrs.concat(("checked disabled enabled selected hidden noResize " + "allowfullscreen declare spellcheck open autofocus").split(" ")).forEach(function (prop) {
-
-                  attrsCfg__attrsCfg[prop.toLowerCase()] = boolAttrCfg;
-         });
-
-         // xlink namespace attributes
-         xlinkAttrs.forEach(function (prop) {
-
-                  attrsCfg__attrsCfg[prop] = xlinkAttrCfg;
-         });
-
-         // xml namespace attributes
-         xmlAttrs.forEach(function (prop) {
-
-                  attrsCfg__attrsCfg[prop] = xmlAttrCfg;
-         });
-
-         var attrsCfg__default = attrsCfg__attrsCfg;
-
-         var setAttributes = function setAttributes(node, name, val) {
-
-                  if (name === "type" && node.tagName === "INPUT") {
-
-                           var value = node.value; // value will be lost in IE if type is changed
-                           node.setAttribute(name, "" + val);
-                           node.value = value;
-                  } else {
-
-                           node.setAttribute(name, "" + val);
-                  }
-         };
-
-         var defaultAttrCfg = {
-                  set: setAttributes,
-                  remove: removeAttr
-         };
-
-         var DOMAttrCfg = function DOMAttrCfg(attrName) {
-
-                  return attrsCfg__default[attrName] || defaultAttrCfg;
-         };
-
-         /************************** WARNING!! **********************************
-          *  Don't do any changes here except if you know what you are          *
-          *  doing. This list controlls wich properties has to be set as an     *
-          *  HTML attributes, HTML boolean attribute or a HTML boolean property *
-          ***********************************************************************/
-
-         var propsCfg__propCfg = {
-                  style: {
-                           set: setObjStyle,
-                           remove: removeProp
-                  },
-                  value: {
-                           set: setPropWithCheck,
-                           remove: removeProp
-                  }
-         };
-
-         // Boolean attributes
-         "paused spellcheck".split(" ").forEach(function (prop) {
-
-                  propsCfg__propCfg[prop] = boolAttrCfg;
-         });
-
-         // Boolean properties
-         boolProps.forEach(function (prop) {
-
-                  propsCfg__propCfg[prop] = boolPropCfg;
-         });
-
-         // Default attributes
-         ("allowTransparency challenge charSet class classID cols contextMenu dateTime dominantBaseline form formAction formEncType " + "formMethod formTarget height keyParams keyType list manifest media role rows size sizes srcset " + "action enctype method novalidate scrolling width wmode " +
-         // IE-only attribute that specifies security restrictions on an iframe
-         // as an alternative to the sandbox attribute on IE<10
-         "security " +
-         // itemProp, itemScope, itemType are for
-         // Microdata support. See http://schema.org/docs/gs.html
-         "itemProp itemType inputMode inlist datatype prefix " +
-         // property is supported for OpenGraph in meta tags.
-         "property " + "resource rev typeof vocab about for " +
-         // itemID and itemRef are for Microdata support as well but
-         // only specified in the the WHATWG spec document. See
-         // https://html.spec.whatwg.org/multipage/microdata.html#microdata-dom-api
-         "itemID itemRef " +
-         // All SVG attributes are supported if set as an attribute. This few attributes are added just to
-         // prevent stupidity if anyone are trying to set them as properties
-         "cursor cx cy d dx dy r rx ry viewBox transform r rx ry version y y1 y2 x1 x2 offset opacity points" +
-         // IE-only attribute that controls focus behavior
-         "unselectable" + "role rows size sizes srcSet").split(" ").forEach(function (prop) {
-
-                  propsCfg__propCfg[prop] = defaultAttrCfg;
-         });
-
-         var propsCfg = propsCfg__propCfg;
-
-         var DOMPropsCfg = function DOMPropsCfg(propName) {
-
-                  return propsCfg[propName] || defaultPropCfg;
-         };
-
-         /**
-          * Normalize virtual nodes
-          *
-          * @param  {Object|Function|Array} children
-          * @param  {Object} parent
-          * @return {Object}
-          */
-         var normalizeChildren = function normalizeChildren(children) {
-
-                  // quick 'bail out' if it's an array
-                  if (children.length) {
-
-                           return children;
-                  }
-
-                  if (typeof children === "function") {
-
-                           children = children(children);
-                  }
+        // just do a failsafe here
+        if (!isArray(children)) {
+            children = [children];
+        }
 
-                  if (!isArray(children)) {
+        // everything else...	
+        return children;
+    };
 
-                           return [children];
-                  }
-                  return children;
-         };
+    /**
+     * Append a virtual tree onto a previously rendered DOM tree.
+     *
+     * @param {DOM Element} node
+     * @param {Array|Function} children
+     */
+    var append = function append(node, children) {
 
-         /**
-          * Append a virtual tree onto a previously rendered DOM tree.
-          *
-          * @param {DOM Element} node
-          * @param {Array|Function} children
-          * @param {Object} parent
-          */
-         var append = function append(node, children, parent) {
+        if (node) {
 
-                  if (node) {
+            // normalize the children
+            children = normalizeChildren(children);
 
-                           // normalize the children
-                           children = normalizeChildren(children, parent);
+            var i = 0,
+                j = 0,
+                childNodes = node.childNodes,
+                nodesLen = children.length,
+                text = undefined,
+                textLen = undefined,
+                size = undefined;
 
-                           var i = 0,
-                               j = 0,
-                               childNodes = node.childNodes,
-                               nodesLen = children.length,
-                               text = undefined,
-                               textLen = undefined,
-                               size = undefined;
+            while (i < nodesLen) {
 
-                           while (i < nodesLen) {
+                if (children[i]) {
 
-                                    if (children[i]) {
+                    // Virtual text nodes
+                    if (childNodes[j] != null && children[i].flag === 0x0002) {
 
-                                             // Virtual text nodes
-                                             if (childNodes[j] != null && children[i].flag === flag.TEXT) {
-
-                                                      size = children[i].data.length;
-                                                      text = childNodes[j].data;
-
-                                                      // do nothing if we don't have a text value...
-                                                      if (text) {
+                        // do nothing if we don't have a text value...
+                        if (childNodes[j].data) {
 
-                                                               children[i].data = text;
-                                                               children[i].append(childNodes[j], parent);
-                                                               i++;
+                            size = children[i].data.length;
+                            text = childNodes[j].data;
 
-                                                               textLen = text.length;
+                            children[i].data = text;
+                            children[i].append(childNodes[j]);
+                            i++;
 
-                                                               while (size < textLen && i < nodesLen) {
+                            textLen = text.length;
 
-                                                                        size += children[i].data.length;
-                                                                        children[i].data = "";
-                                                                        i++;
-                                                               }
-                                                      }
+                            while (size < textLen && i < nodesLen) {
 
-                                                      // all others...
-                                             } else {
+                                size += children[i].data.length;
+                                children[i].data = "";
+                                i++;
+                            }
+                        }
 
-                                                               children[i].append(childNodes[j], parent);
-                                                               i++;
-                                                      }
-                                             j++;
-                                    }
-                                    return children;
-                           }
-                  }
-         };
+                        // all others...
+                    } else {
 
-         var prototype_append = function prototype_append(node) {
+                            children[i].append(childNodes[j]);
 
-                  if (node) {
-                           var children = this.children;
-                           var props = this.props;
-                           var attrs = this.attrs;
-                           var hooks = this.hooks;
-                           var events = this.events;
+                            i++;
+                        }
+                    j++;
+                }
+                return children;
+            }
+        }
+    };
 
-                           this.node = node;
+    var prototype_append = function prototype_append(node) {
 
-                           // Append children   
-                           if (children != null) {
+        if (node) {
+            var children = this.children;
+            var props = this.props;
+            var attrs = this.attrs;
+            var hooks = this.hooks;
+            var events = this.events;
 
-                                    append(node, children, this);
-                           }
+            this.node = node;
 
-                           if (attrs != null) {
+            // Append children   
+            if (children != null) {
 
-                                    forIn(attrs, function (name, value) {
+                append(node, children, this);
+            }
 
-                                             if (value != null) {
+            if (attrs != null) {
 
-                                                      DOMAttrCfg(name).set(node, name, value);
-                                             }
-                                    });
-                           }
+                forIn(attrs, function (name, value) {
 
-                           if (props != null) {
+                    if (value != null) {
 
-                                    forIn(props, function (name, value) {
+                        DOMAttrCfg(name).set(node, name, value);
+                    }
+                });
+            }
 
-                                             if (value != null) {
+            if (props != null) {
 
-                                                      DOMPropsCfg(name).set(node, name, value);
-                                             }
-                                    });
-                           }
+                forIn(props, function (name, value) {
 
-                           // Handle events
-                           if (events) {
+                    if (value != null) {
 
-                                    node._handler = this;
-                           }
-                           // Handle hooks
-                           if (hooks && hooks.created) {
+                        DOMPropsCfg(name).set(node, name, value);
+                    }
+                });
+            }
 
-                                    hooks.created(this, node);
-                           }
-                           return node;
-                  }
-         };
+            // Handle events
+            if (events) {
 
-         var hyphenateStyleName___uppercasePattern = /([A-Z])/g;
+                node._handler = this;
+            }
+            // Handle hooks
+            if (hooks && hooks.created) {
 
-         var hyphenateStyleName = function hyphenateStyleName(string) {
-                  return string.replace(hyphenateStyleName___uppercasePattern, "-$1").toLowerCase();
-         };
+                hooks.created(this, node);
+            }
+            return node;
+        }
+    };
 
-         /**
-          *  Creates markup for CSS style values
-          *
-          * @param {Object} styles
-          * @return {String}
-          */
-         var createMarkupForStyles = function createMarkupForStyles(styles) {
+    var hyphenateStyleName___uppercasePattern = /([A-Z])/g;
 
-                  var idx = 0,
-                      len = undefined,
-                      hSN = undefined,
-                      html = "";
+    var hyphenateStyleName = function hyphenateStyleName(string) {
+        return string.replace(hyphenateStyleName___uppercasePattern, "-$1").toLowerCase();
+    };
 
-                  forIn(styles, function (styleName, styleValue) {
+    /**
+     *  Creates markup for CSS style values
+     *
+     * @param {Object} styles
+     * @return {String}
+     */
+    var createMarkupForStyles = function createMarkupForStyles(styles) {
 
-                           if (styleValue != null) {
+        var idx = 0,
+            len = undefined,
+            hSN = undefined,
+            html = "";
 
-                                    hSN = hyphenateStyleName(styleName);
+        forIn(styles, function (styleName, styleValue) {
 
-                                    if (isArray(styleValue)) {
+            if (styleValue != null) {
 
-                                             for (len = styleValue.length; idx < len; idx++) {
+                hSN = hyphenateStyleName(styleName);
 
-                                                      html += hSN + ":" + cleanValues(styleName, styleValue[idx]) + ";";
-                                             }
-                                    } else {
+                if (typeof styleValue === "string") {
 
-                                             html += hSN + ":" + cleanValues(styleName, styleValue) + ";";
-                                    }
-                           }
-                  });
+                    html += hSN + ":" + cleanValues(styleName, styleValue) + ";";
+                } else if (isArray(styleValue)) {
 
-                  return html;
-         };
+                    for (len = styleValue.length; idx < len; idx++) {
 
-         var booleanAttrToString = function booleanAttrToString(name, value) {
+                        html += hSN + ":" + cleanValues(styleName, styleValue[idx]) + ";";
+                    }
+                } else {
 
-                  return value ? name : "";
-         };
+                    html += hSN + ":" + cleanValues(styleName, styleValue) + ";";
+                }
+            }
+        });
 
-         var createMarktupForSelect__ctx = null;
-         /**
-          * To get 'selected' and 'selected multiple' rendered correct, we need to do this
-          * 'little' test. Else highlighted select values will not be rendred.
-          * E.g. '<option selected value="2"></option>' will become '<option value="2"></option>'
-          */
+        return html;
+    };
 
-         var createMarktupForSelect = function createMarktupForSelect(tagName, value, props, prop) {
+    var booleanAttrToString = function booleanAttrToString(name, value) {
 
-                  var html = "";
+        return value ? name : "";
+    };
 
-                  if (tagName === "select") {
+    var createMarktupForSelect__ctx = null;
+    /**
+     * To get 'selected' and 'selected multiple' rendered correct, we need to do this
+     * 'little' test. Else highlighted select values will not be rendred.
+     * E.g. '<option selected value="2"></option>' will become '<option value="2"></option>'
+     */
 
-                           createMarktupForSelect__ctx = {
-                                    value: value,
-                                    multiple: props.multiple
-                           };
-                  } else if (tagName === "option") {
+    var createMarktupForSelect = function createMarktupForSelect(tagName, value, props, prop) {
 
-                           if (createMarktupForSelect__ctx && (createMarktupForSelect__ctx.multiple ? inArray(createMarktupForSelect__ctx.value, value) : createMarktupForSelect__ctx.value === value)) {
+        var html = "";
 
-                                    html += " " + booleanAttrToString("selected", true) + " " + prop + "=\"" + "" + value + "\"";
-                           } else {
+        if (tagName === "select") {
 
-                                    html += " " + prop + "=\"" + "" + value + "\"";
-                           }
-                  }
-                  return html;
-         };
+            createMarktupForSelect__ctx = {
+                value: value,
+                multiple: props.multiple
+            };
+        } else if (tagName === "option") {
 
-         var propBoolCfg = {
+            if (createMarktupForSelect__ctx && (createMarktupForSelect__ctx.multiple ? inArray(createMarktupForSelect__ctx.value, value) : createMarktupForSelect__ctx.value === value)) {
 
-                  download: 0x02
-         };
+                html += " " + booleanAttrToString("selected", true) + " " + prop + "=\"" + "" + value + "\"";
+            } else {
 
-         boolProps.forEach(function (prop) {
+                html += " " + prop + "=\"" + "" + value + "\"";
+            }
+        }
+        return html;
+    };
 
-                  propBoolCfg[prop] = 0x01;
-         });
+    var propBoolCfg = {
 
-         /**
-          * Used *only* for server side rendring (SSR) where properties has to be
-          * set as attributes.
-          */
-         var attrNamesCfg = {
-                  acceptCharset: "accept-charset",
-                  className: "class",
-                  htmlFor: "for",
-                  httpEquiv: "http-equiv",
-                  contentEditable: "contenteditable"
-         };
+        download: 0x02
+    };
 
-         var nsCfg = {};
+    boolProps.forEach(function (prop) {
 
-         xlinkAttrs.forEach(function (prop) {
+        propBoolCfg[prop] = 0x01;
+    });
 
-                  nsCfg[prop] = true;
-         });
+    /**
+     * Used *only* for server side rendring (SSR) where properties has to be
+     * set as attributes.
+     */
+    var attrNamesCfg = {
+        acceptCharset: "accept-charset",
+        className: "class",
+        htmlFor: "for",
+        httpEquiv: "http-equiv",
+        contentEditable: "contenteditable"
+    };
 
-         xmlAttrs.forEach(function (prop) {
+    var nsCfg = {};
 
-                  nsCfg[prop] = true;
-         });
+    xlinkAttrs.forEach(function (prop) {
 
-         // Simplified subset
-         var isAttributeNameSafe__VALID_ATTRIBUTE_NAME_REGEX = /^[a-zA-Z_][a-zA-Z_\.\-\d]*$/,
-             isAttributeNameSafe__illegalAttributeNameCache = {},
-             isAttributeNameSafe__validatedAttributeNameCache = {};
+        nsCfg[prop] = true;
+    });
 
-         var isAttributeNameSafe = function isAttributeNameSafe(attributeName) {
+    xmlAttrs.forEach(function (prop) {
 
-                  if (isAttributeNameSafe__validatedAttributeNameCache[attributeName]) {
+        nsCfg[prop] = true;
+    });
 
-                           return true;
-                  }
-                  if (isAttributeNameSafe__illegalAttributeNameCache[attributeName]) {
+    // Simplified subset
+    var isAttributeNameSafe__VALID_ATTRIBUTE_NAME_REGEX = /^[a-zA-Z_][a-zA-Z_\.\-\d]*$/,
+        isAttributeNameSafe__illegalAttributeNameCache = {},
+        isAttributeNameSafe__validatedAttributeNameCache = {};
 
-                           return false;
-                  }
+    var isAttributeNameSafe = function isAttributeNameSafe(attributeName) {
 
-                  if (isAttributeNameSafe__VALID_ATTRIBUTE_NAME_REGEX.test(attributeName) || nsCfg[attributeName]) {
+        if (isAttributeNameSafe__validatedAttributeNameCache[attributeName]) {
 
-                           isAttributeNameSafe__validatedAttributeNameCache[attributeName] = true;
-                           return true;
-                  }
+            return true;
+        }
+        if (isAttributeNameSafe__illegalAttributeNameCache[attributeName]) {
 
-                  isAttributeNameSafe__illegalAttributeNameCache[attributeName] = true;
+            return false;
+        }
 
-                  return false;
-         };
+        if (isAttributeNameSafe__VALID_ATTRIBUTE_NAME_REGEX.test(attributeName) || nsCfg[attributeName]) {
 
-         /**
-          *  Creates markup for HTML properties
-          *
-          * @param {Object} props
-          * @param {String} tagName
-          * @return {String} Markup string, or empty string if the property was invalid.
-          */
-         var createMarkupForProperties = function createMarkupForProperties(props, tagName) {
+            isAttributeNameSafe__validatedAttributeNameCache[attributeName] = true;
+            return true;
+        }
 
-                  var attrType = undefined,
-                      html = "",
-                      attr = undefined;
+        isAttributeNameSafe__illegalAttributeNameCache[attributeName] = true;
 
-                  forIn(props, function (prop, value) {
+        return false;
+    };
 
-                           // we need to check for number values, else expected - '<a download="0"></a>' - would
-                           // become - '<a></a>'. And the '0' - zero - will be skipped.
-                           if (prop !== "innerHTML" && (value || typeof value === "number")) {
+    /**
+     *  Creates markup for HTML properties
+     *
+     * @param {Object} props
+     * @param {String} tagName
+     * @return {String} Markup string, or empty string if the property was invalid.
+     */
+    var createMarkupForProperties = function createMarkupForProperties(props, tagName) {
 
-                                    // Special case: "select" and "select multiple"
-                                    if (prop === "value" && (tagName === "select" || tagName === "option")) {
+        var attrType = undefined,
+            html = "",
+            attr = undefined;
 
-                                             html += createMarktupForSelect(tagName, value, props, prop);
+        forIn(props, function (prop, value) {
 
-                                             // Special case: "style"
-                                    } else if (prop === "style") {
+            // we need to check for number values, else expected - '<a download="0"></a>' - would
+            // become - '<a></a>'. And the '0' - zero - will be skipped.
+            if (prop !== "innerHTML" && (value || typeof value === "number")) {
 
-                                                      html += " " + prop + "=\"" + "" + createMarkupForStyles(value) + "\"";
-                                             } else if (!isAttributeNameSafe(prop) || value == null) {
+                // Special case: "select" and "select multiple"
+                if (prop === "value" && (tagName === "select" || tagName === "option")) {
 
-                                                      html += "";
-                                             } else {
+                    html += createMarktupForSelect(tagName, value, props, prop);
 
-                                                      prop = (attrNamesCfg[prop] || prop).toLowerCase();
+                    // Special case: "style"
+                } else if (prop === "style") {
 
-                                                      attrType = propBoolCfg[prop];
+                        html += " " + prop + "=\"" + "" + createMarkupForStyles(value) + "\"";
+                    } else if (!isAttributeNameSafe(prop) || value == null) {
 
-                                                      // a boolean `value` has to be truthy
-                                                      // and a overloaded boolean `value` has to be === true
-                                                      if (attrType === 0x01 || attrType === 0x02 && value === true) {
+                        html += "";
+                    } else {
 
-                                                               attr = escapeHtml(prop);
-                                                      } else {
+                        prop = (attrNamesCfg[prop] || prop).toLowerCase();
 
-                                                               attr = prop + "=\"" + "" + (value === true ? "" : value) + "\"";
-                                                      }
+                        attrType = propBoolCfg[prop];
 
-                                                      if (attr) {
+                        // a boolean `value` has to be truthy
+                        // and a overloaded boolean `value` has to be === true
+                        if (attrType === 0x01 || attrType === 0x02 && value === true) {
 
-                                                               html += " " + attr;
-                                                      }
-                                             }
-                           }
-                  });
+                            attr = escapeHtml(prop);
+                        } else {
 
-                  return html;
-         };
+                            attr = prop + "=\"" + "" + (value === true ? "" : value) + "\"";
+                        }
 
-         var attrBoolCfg = {};
+                        if (attr) {
 
-         boolAttrs.forEach(function (prop) {
+                            html += " " + attr;
+                        }
+                    }
+            }
+        });
 
-                  attrBoolCfg[prop.toLowerCase()] = 0x01;
-         });
+        return html;
+    };
 
-         /**
-          *  Creates markup for HTML attributes
-          *
-          * @param {Object} props
-          * @return {String}
-          */
-         var createMarkupForAttributes = function createMarkupForAttributes(props, tagName) {
+    var attrBoolCfg = {};
 
-                  var attrType = undefined,
-                      html = "",
-                      attr = undefined;
+    boolAttrs.forEach(function (prop) {
 
-                  forIn(props, function (prop, value) {
+        attrBoolCfg[prop.toLowerCase()] = 0x01;
+    });
 
-                           // we need to check for number values, else expected - '<a download="0"></a>' - would
-                           // become - '<a></a>'. And the '0' - zero - will be skipped.
-                           if (prop !== "innerHTML" && (value || typeof value === "number")) {
+    /**
+     *  Creates markup for HTML attributes
+     *
+     * @param {Object} props
+     * @return {String}
+     */
+    var createMarkupForAttributes = function createMarkupForAttributes(props, tagName) {
 
-                                    // Special case: "select" and "select multiple"
+        var attrType = undefined,
+            html = "",
+            attr = undefined;
 
-                                    if (prop === "value" && (tagName === "select" || tagName === "option")) {
+        forIn(props, function (prop, value) {
 
-                                             html += createMarktupForSelect(tagName, value, props, prop);
+            // we need to check for number values, else expected - '<a download="0"></a>' - would
+            // become - '<a></a>'. And the '0' - zero - will be skipped.
+            if (prop !== "innerHTML" && (value || typeof value === "number")) {
 
-                                             // Special case: "style"
-                                    } else if (prop === "style") {
+                // Special case: "select" and "select multiple"
 
-                                                      html += " " + prop + "=\"" + "" + createMarkupForStyles(value) + "\"";
-                                             } else {
+                if (prop === "value" && (tagName === "select" || tagName === "option")) {
 
-                                                      prop = attrNamesCfg[prop] || prop;
+                    html += createMarktupForSelect(tagName, value, props, prop);
 
-                                                      if (prop !== "viewBox") {
+                    // Special case: "style"
+                } else if (prop === "style") {
 
-                                                               prop = prop.toLowerCase();
-                                                      }
+                        html += " " + prop + "=\"" + "" + createMarkupForStyles(value) + "\"";
+                    } else {
 
-                                                      attrType = attrBoolCfg[prop];
+                        prop = attrNamesCfg[prop] || prop;
 
-                                                      // a boolean `value` has to be truthy
-                                                      // and a overloaded boolean `value` has to be === true
-                                                      if (attrType === 0x01 || attrType === 0x02 && value === true) {
+                        if (prop !== "viewBox") {
 
-                                                               attr = escapeHtml(prop);
-                                                      } else {
+                            prop = prop.toLowerCase();
+                        }
 
-                                                               // don't render unsafe HTML attributes - e.g. various custom attributes
-                                                               if (!isAttributeNameSafe(prop) || value == null) {
+                        attrType = attrBoolCfg[prop];
 
-                                                                        html += "";
-                                                               } else {
+                        // a boolean `value` has to be truthy
+                        // and a overloaded boolean `value` has to be === true
+                        if (attrType === 0x01 || attrType === 0x02 && value === true) {
 
-                                                                        attr = (attrNamesCfg[prop] || prop) + "=\"" + "" + (value === true ? "" : value) + "\"";
-                                                               }
-                                                      }
+                            attr = escapeHtml(prop);
+                        } else {
 
-                                                      if (attr) {
+                            // don't render unsafe HTML attributes - e.g. various custom attributes
+                            if (!isAttributeNameSafe(prop) || value == null) {
 
-                                                               html += " " + attr;
-                                                      }
-                                             }
-                           }
-                  });
+                                html += "";
+                            } else {
 
-                  return html;
-         };
+                                attr = (attrNamesCfg[prop] || prop) + "=\"" + "" + (value === true ? "" : value) + "\"";
+                            }
+                        }
 
-         // For HTML, certain tags should omit their close tag. We keep a whitelist for
-         // those special cased tags
-         var voidCfg = {
-                  "area": true,
-                  "base": true,
-                  "br": true,
-                  "col": true,
-                  "command": true,
-                  "embed": true,
-                  "hr": true,
-                  "img": true,
-                  "input": true,
-                  "keygen": true,
-                  "link": true,
-                  "menuitem": true,
-                  "meta": true,
-                  "param": true,
-                  "source": true,
-                  "track": true,
-                  "wbr": true
-         };
+                        if (attr) {
 
-         var toHtml = function toHtml() {
-                  var key = undefined;var props = this.props;
-                  var attrs = this.attrs;
-                  var children = this.children;
-                  var tagName = this.tagName;
+                            html += " " + attr;
+                        }
+                    }
+            }
+        });
 
-                  var attributes = {},
-                      properties = {};
+        return html;
+    };
 
-                  if (attrs) {
+    // For HTML, certain tags should omit their close tag. We keep a whitelist for
+    // those special cased tags
+    var voidCfg = {
+        "area": true,
+        "base": true,
+        "br": true,
+        "col": true,
+        "command": true,
+        "embed": true,
+        "hr": true,
+        "img": true,
+        "input": true,
+        "keygen": true,
+        "link": true,
+        "menuitem": true,
+        "meta": true,
+        "param": true,
+        "source": true,
+        "track": true,
+        "wbr": true
+    };
 
-                           for (key in attrs) {
+    var toHtml = function toHtml() {
+        var key = undefined;var props = this.props;
+        var attrs = this.attrs;
+        var children = this.children;
+        var tagName = this.tagName;
 
-                                    if (key === "value") {
+        var attributes = {},
+            properties = {};
 
-                                             if (this.tagName === "textarea" || attrs.contenteditable) {
+        if (attrs) {
 
-                                                      children = [new Text(attrs[key])];
-                                                      continue;
-                                             }
-                                    }
-                                    attributes[key] = attrs[key];
-                           }
-                  }
+            for (key in attrs) {
 
-                  if (props) {
-                           for (key in props) {
+                if (key === "value") {
 
-                                    if (key === "value") {
+                    if (this.tagName === "textarea" || attrs.contenteditable) {
 
-                                             if (this.tagName === "textarea" || props.contenteditable) {
+                        children = [new Text(attrs[key])];
+                        continue;
+                    }
+                }
+                attributes[key] = attrs[key];
+            }
+        }
 
-                                                      children = [new Text(props[key])];
-                                                      continue;
-                                             }
-                                    }
+        if (props) {
+            for (key in props) {
 
-                                    properties[key] = this.props[key];
-                           }
-                  }
+                if (key === "value") {
 
-                  tagName = this.tagName.toLowerCase();
+                    if (this.tagName === "textarea" || props.contenteditable) {
 
-                  var innerHTML = props && props.innerHTML || attrs && attrs.innerHTML,
-                      html = "<" + tagName;
+                        children = [new Text(props[key])];
+                        continue;
+                    }
+                }
 
-                  // create markup for ...
+                properties[key] = this.props[key];
+            }
+        }
 
-                  // ...HTML attributes
-                  if (attrs != null) {
+        tagName = this.tagName.toLowerCase();
 
-                           html += createMarkupForAttributes(attributes, tagName);
-                  }
+        var innerHTML = props && props.innerHTML || attrs && attrs.innerHTML,
+            html = "<" + tagName;
 
-                  // ... HTML properties
-                  if (props != null) {
+        // create markup for ...
 
-                           html += createMarkupForProperties(properties, tagName);
-                  }
+        // ...HTML attributes
+        if (attrs != null) {
 
-                  if (voidCfg[tagName]) {
+            html += createMarkupForAttributes(attributes, tagName);
+        }
 
-                           html = html + "/>";
-                  } else {
+        // ... HTML properties
+        if (props != null) {
 
-                           html = html + ">";
+            html += createMarkupForProperties(properties, tagName);
+        }
 
-                           // ... child nodes
-                           if (children.length) {
+        if (voidCfg[tagName]) {
 
-                                    if (children.length === 1) {
+            html = html + "/>";
+        } else {
 
-                                             html += children[0].toHtml();
-                                    } else {
+            html = html + ">";
 
-                                             var index = 0;
+            // ... child nodes
+            if (children.length) {
 
-                                             var len = children.length;
+                if (children.length === 1) {
 
-                                             for (; index < len; index++) {
+                    html += children[0].toHtml();
+                } else {
 
-                                                      html += children[index].toHtml();
-                                             }
-                                    }
-                                    // process innerHTML
-                           } else if (innerHTML) {
+                    var index = 0;
 
-                                             html += innerHTML;
-                                    }
+                    var len = children.length;
 
-                           html += "</" + tagName + ">";
-                  }
-                  return html;
-         };
+                    for (; index < len; index++) {
 
-         /**
-          * Insert a virtual node
-          *
-          * @param {Object} container Node to insert.
-          * @param {Object} child Reference to the next html element.
-          * @param {Object} parent Current parent.
-          */
-         var appendChild = function appendChild(container, child, parent) {
+                        html += children[index].toHtml();
+                    }
+                }
+                // process innerHTML
+            } else if (innerHTML) {
 
-                  child.create(parent);
-                  container.appendChild(child.node);
-                  child.render();
-         };
+                    html += innerHTML;
+                }
 
-         var render = function render(parent) {
-                  var children = this.children;
-                  var attrs = this.attrs;
-                  var props = this.props;
-                  var hooks = this.hooks;
-                  var events = this.events;
+            html += "</" + tagName + ">";
+        }
+        return html;
+    };
 
-                  var node = this.create(parent);
+    /**
+     * Insert a virtual node
+     *
+     * @param {Object} container Node to insert.
+     * @param {Object} child Reference to the next html element.
+     * @param {Object} parent Current parent.
+     */
+    var appendChild = function appendChild(container, child, parent) {
 
-                  // Render children
-                  if (children.length) {
+        child.create(parent);
+        container.appendChild(child.node);
+        child.render();
+    };
 
-                           // quick patch if only one child
-                           if (children.length === 1) {
+    var render = function render(parent) {
+        var children = this.children;
+        var attrs = this.attrs;
+        var props = this.props;
+        var hooks = this.hooks;
+        var events = this.events;
 
-                                    if (children[0]) {
+        var node = this.create(parent);
 
-                                             appendChild(node, children[0], this);
-                                    }
-                           } else {
+        // Render children
+        if (children.length) {
 
-                                    var i = 0,
-                                        len = children.length;
+            // quick patch if only one child
+            if (children.length === 1) {
 
-                                    for (; i < len; i++) {
+                if (children[0]) {
 
-                                             if (children[i]) {
+                    appendChild(node, children[0], this);
+                }
+            } else {
 
-                                                      appendChild(node, children[i], this);
-                                             }
-                                    }
-                           }
-                  }
+                var i = 0,
+                    len = children.length;
 
-                  // Render properties
-                  if (props != null) {
+                for (; i < len; i++) {
 
-                           forIn(props, function (name, value) {
+                    if (children[i]) {
 
-                                    if (value != null) {
+                        appendChild(node, children[i], this);
+                    }
+                }
+            }
+        }
 
-                                             DOMPropsCfg(name).set(node, name, value);
-                                    }
-                           });
-                  }
+        // Render properties
+        if (props != null) {
 
-                  // Render attributes
-                  if (attrs != null) {
+            forIn(props, function (name, value) {
 
-                           forIn(attrs, function (name, value) {
+                if (value != null) {
 
-                                    if (value != null) {
+                    DOMPropsCfg(name).set(node, name, value);
+                }
+            });
+        }
 
-                                             DOMAttrCfg(name).set(node, name, value);
-                                    }
-                           });
-                  }
+        // Render attributes
+        if (attrs != null) {
 
-                  if (events != null) {
+            forIn(attrs, function (name, value) {
 
-                           node._handler = this;
-                  }
+                if (value != null) {
 
-                  // Handle hooks
+                    DOMAttrCfg(name).set(node, name, value);
+                }
+            });
+        }
 
-                  if (hooks != null) {
+        if (events != null) {
 
-                           if (hooks.created) {
+            node._handler = this;
+        }
 
-                                    hooks.created(this, node);
-                           }
-                  }
+        // Handle hooks
 
-                  return node;
-         };
+        if (hooks != null) {
 
-         /**
-          * Remove a real DOM element from where it was inserted
-          */
-         var destroy = function destroy() {
-                  var _this = this;
+            if (hooks.created) {
 
-                  var node = this.node;
+                hooks.created(this, node);
+            }
+        }
 
-                  if (node) {
-                           (function () {
+        return node;
+    };
 
-                                    var parentNode = node.parentNode;
+    /**
+     * Remove a real DOM element from where it was inserted
+     */
+    var destroy = function destroy() {
+        var _this = this;
 
-                                    if (parentNode) {
+        var node = this.node;
 
-                                             var hooks = _this.hooks;
+        if (node) {
+            (function () {
 
-                                             if (!hooks || !hooks.destroy) {
+                var parentNode = node.parentNode;
 
-                                                      parentNode.removeChild(node);
-                                             } else {
+                if (parentNode) {
 
-                                                      if (hooks.destroy) {
+                    var hooks = _this.hooks;
 
-                                                               hooks.destroy(node, function () {
+                    if (!hooks || !hooks.destroy) {
 
-                                                                        parentNode.removeChild(node);
-                                                               });
+                        parentNode.removeChild(node);
+                    } else {
 
-                                                               _this.andrew = true;
-                                                      }
-                                             }
-                                    }
-                           })();
-                  }
-         };
+                        if (hooks.destroy) {
 
-         var patchObject = function patchObject(node, attrName, oldObj, newObj) {
+                            hooks.destroy(node, function () {
 
-                  var hasDiff = false,
-                      diffObj = {};
+                                parentNode.removeChild(node);
+                            });
 
-                  forIn(newObj, function (key, value) {
+                            _this.andrew = true;
+                        }
+                    }
+                }
+            })();
+        }
+    };
 
-                           if (oldObj[key] != value) {
+    var patchObject = function patchObject(node, attrName, oldObj, newObj) {
 
-                                    hasDiff = true;
-                                    diffObj[key] = value;
-                           }
-                  });
+        var hasDiff = false,
+            diffObj = {};
 
-                  forIn(oldObj, function (key, value) {
+        forIn(newObj, function (key, value) {
 
-                           if (value != null && !newObj[key]) {
+            if (oldObj[key] != value) {
 
-                                    hasDiff = true;
-                                    diffObj[key] = null;
-                           }
-                  });
+                hasDiff = true;
+                diffObj[key] = value;
+            }
+        });
 
-                  if (hasDiff) {
+        forIn(oldObj, function (key, value) {
 
-                           DOMAttrCfg(attrName).set(node, attrName, diffObj);
-                  }
-         };
+            if (value != null && !newObj[key]) {
 
-         var patchArray = function patchArray(node, attrName, oldArray, newArray) {
+                hasDiff = true;
+                diffObj[key] = null;
+            }
+        });
 
-                  var lenA = oldArray.length;
+        if (hasDiff) {
 
-                  var hasDiff = false;
+            DOMAttrCfg(attrName).set(node, attrName, diffObj);
+        }
+    };
 
-                  if (lenA !== newArray.length) {
+    var patchArray = function patchArray(node, attrName, oldArray, newArray) {
 
-                           hasDiff = true;
-                  } else {
+        var lenA = oldArray.length;
 
-                           var i = 0;
+        var hasDiff = false;
 
-                           while (!hasDiff && i < lenA) {
+        if (lenA !== newArray.length) {
 
-                                    if (oldArray[i] != newArray[i]) {
+            hasDiff = true;
+        } else {
 
-                                             hasDiff = true;
-                                    }
-                                    ++i;
-                           }
-                  }
+            var i = 0;
 
-                  if (hasDiff) {
+            while (!hasDiff && i < lenA) {
 
-                           DOMAttrCfg(attrName).set(node, attrName, newArray);
-                  }
-         };
+                if (oldArray[i] != newArray[i]) {
 
-         var patchAttributes = function patchAttributes(node, oldAttrs, newAttrs) {
+                    hasDiff = true;
+                }
+                ++i;
+            }
+        }
 
-                  // newAttrs is empty, remove all properties from oldAttrs.
-                  if (oldAttrs != null && newAttrs == null) {
+        if (hasDiff) {
 
-                           forIn(oldAttrs, function (attrName, attrVal) {
+            DOMAttrCfg(attrName).set(node, attrName, newArray);
+        }
+    };
 
-                                    DOMAttrCfg(attrName).remove(node, attrName);
-                           });
+    var patchAttributes = function patchAttributes(node, oldAttrs, newAttrs) {
 
-                           return;
-                  }
+        // newAttrs is empty, remove all properties from oldAttrs.
+        if (oldAttrs != null && newAttrs == null) {
 
-                  // oldAttrs is empty, insert all attributes from newAttrs.
-                  if (oldAttrs == null && newAttrs != null) {
+            forIn(oldAttrs, function (attrName, attrVal) {
 
-                           forIn(newAttrs, function (attrName, newAttrVal) {
+                DOMAttrCfg(attrName).remove(node, attrName);
+            });
 
-                                    DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
-                           });
-                           return;
-                  }
+            return;
+        }
 
-                  var attrAVal = undefined,
-                      isArrayA = undefined,
-                      isBArray = undefined;
+        // oldAttrs is empty, insert all attributes from newAttrs.
+        if (oldAttrs == null && newAttrs != null) {
 
-                  // Remove and update HTML attributes on the virtual node
-                  forIn(oldAttrs, function (attrName, attrVal) {
+            forIn(newAttrs, function (attrName, newAttrVal) {
 
-                           if (!newAttrs[attrName] && attrVal != null) {
+                DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
+            });
+            return;
+        }
 
-                                    DOMAttrCfg(attrName).remove(node, attrName);
-                           }
-                  });
+        var attrAVal = undefined,
+            isArrayA = undefined,
+            isBArray = undefined;
 
-                  forIn(newAttrs, function (attrName, newAttrVal) {
+        // Remove and update HTML attributes on the virtual node
+        forIn(oldAttrs, function (attrName, attrVal) {
 
-                           if ((attrAVal = oldAttrs[attrName]) == null) {
+            if (!newAttrs[attrName] && attrVal != null) {
 
-                                    if (newAttrVal != null) {
+                DOMAttrCfg(attrName).remove(node, attrName);
+            }
+        });
 
-                                             DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
-                                    }
-                           } else if (newAttrVal == null) {
+        forIn(newAttrs, function (attrName, newAttrVal) {
 
-                                    DOMAttrCfg(attrName).remove(node, attrName);
-                           } else if (typeof newAttrVal === "object" && typeof attrAVal === "object") {
+            if ((attrAVal = oldAttrs[attrName]) == null) {
 
-                                    isBArray = isArray(newAttrVal);
-                                    isArrayA = isArray(attrAVal);
-                                    if (isBArray || isArrayA) {
+                if (newAttrVal != null) {
 
-                                             if (isBArray && isArrayA) {
+                    DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
+                }
+            } else if (newAttrVal == null) {
 
-                                                      patchArray(node, attrName, attrAVal, newAttrVal);
-                                             } else {
+                DOMAttrCfg(attrName).remove(node, attrName);
+            } else if (typeof newAttrVal === "object" && typeof attrAVal === "object") {
 
-                                                      DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
-                                             }
-                                    } else {
+                isBArray = isArray(newAttrVal);
+                isArrayA = isArray(attrAVal);
+                if (isBArray || isArrayA) {
 
-                                             patchObject(node, attrName, attrAVal, newAttrVal, false);
-                                    }
-                           } else if (newAttrVal != null || attrAVal !== newAttrVal) {
+                    if (isBArray && isArrayA) {
 
-                                    DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
-                           }
-                  });
-         };
+                        patchArray(node, attrName, attrAVal, newAttrVal);
+                    } else {
 
-         var patchProperties = function patchProperties(node, oldProps, newProps) {
+                        DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
+                    }
+                } else {
 
-                  // remove all properties from oldProps, when newProps is empty.
-                  if (oldProps != null && newProps == null) {
+                    patchObject(node, attrName, attrAVal, newAttrVal, false);
+                }
+            } else if (newAttrVal != null || attrAVal !== newAttrVal) {
 
-                           forIn(oldProps, function (propName) {
+                DOMAttrCfg(attrName).set(node, attrName, newAttrVal);
+            }
+        });
+    };
 
-                                    DOMPropsCfg(propName).remove(node, propName);
-                           });
+    var patchProperties = function patchProperties(node, oldProps, newProps) {
 
-                           return;
-                  }
+        // remove all properties from oldProps, when newProps is empty.
+        if (oldProps != null && newProps == null) {
 
-                  // insert all properties from newProps when oldProps is empty.
-                  if (oldProps == null && newProps != null) {
+            forIn(oldProps, function (propName) {
 
-                           forIn(newProps, function (propName, propNewVal) {
+                DOMPropsCfg(propName).remove(node, propName);
+            });
 
-                                    DOMPropsCfg(propName).set(node, propName, propNewVal);
-                           });
+            return;
 
-                           return;
-                  }
+        }
 
-                  // Remove and update virtual node HTML properties
-                  forIn(oldProps, function (propName, propValue) {
+        // insert all properties from newProps when oldProps is empty.
+        if (oldProps == null && newProps != null) {
 
-                           if (!newProps[propName]) {
+            forIn(newProps, function (propName, propNewVal) {
 
-                                    DOMPropsCfg(propName).remove(node, propName);
-                           }
-                  });
+                DOMPropsCfg(propName).set(node, propName, propNewVal);
+            });
 
-                  forIn(newProps, function (propName, propNewVal) {
+            return;
+        }
 
-                           // old properties are set to '{}', insert all new properties
-                           if (oldProps[propName] == null && propNewVal != null) {
+        // Remove and update virtual node HTML properties
+        forIn(oldProps, function (propName, propValue) {
 
-                                    DOMPropsCfg(propName).set(node, propName, propNewVal);
-                           } else if (propNewVal == null) {
+            if (!newProps[propName]) {
 
-                                    DOMPropsCfg(propName).remove(node, propName);
-                           } else if (oldProps[propName] !== propNewVal) {
+                DOMPropsCfg(propName).remove(node, propName);
+            }
+        });
 
-                                    DOMPropsCfg(propName).set(node, propName, propNewVal);
-                           }
-                  });
-         };
+        forIn(newProps, function (propName, propNewVal) {
 
-         /**
-          * Removes one or more virtual nodes attached to a real DOM node
-          *
-          * @param {Array} nodes
-          */
-         var detach = function detach(nodes) {
+            // old properties are set to '{}', insert all new properties
+            if (oldProps[propName] == null && propNewVal != null) {
 
-                  var index = nodes.length;
+                DOMPropsCfg(propName).set(node, propName, propNewVal);
+            } else if (propNewVal == null) {
 
-                  while (index--) {
+                DOMPropsCfg(propName).remove(node, propName);
+            } else if (oldProps[propName] !== propNewVal) {
 
-                           nodes[index].detach();
-                  }
-         };
+                DOMPropsCfg(propName).set(node, propName, propNewVal);
+            }
+        });
+    };
 
-         /**
-          * Creates a mapping that can be used to look up children using a key.
-          *
-          * @param  {Array}  children An array of nodes.
-          * @param  {Number} idxFrom 
-          * @param  {Number} idxTo 
-          * @return {Object} A mapping of keys to the children of the virtual node.
-          */
+    /**
+     * Removes one or more virtual children attached to a real DOM node
+     * @param {Array} children the child nodes to remove
+     */
+    var detach = function detach(children) {
 
-         var buildKeys = function buildKeys(children, idxFrom, idxTo) {
+        var idx = children.length;
 
-                  var map = {},
-                      key = undefined;
+        while (idx--) {
 
-                  while (idxFrom < idxTo) {
+            children[idx].detach();
+        }
+    };
 
-                           key = children[idxFrom].key;
-                           if (key != null) {
+    /**
+     * Creates a mapping that can be used to look up children using a key.
+     *
+     * @param  {Array}  children An array of nodes.
+     * @param  {Number} idxFrom 
+     * @param  {Number} idxTo 
+     * @return {Object} A mapping of keys to the children of the virtual node.
+     */
 
-                                    map[key] = idxFrom;
-                           }
-                           ++idxFrom;
-                  }
+    var buildKeys = function buildKeys(children, idxFrom, idxTo) {
 
-                  return map;
-         };
+        var map = {},
+            key = undefined;
 
-         /**
-          * Inserts `childNode` as a child of `parentNode` at the `index`.
-          *
-          * @param {DOMElement} parentNode Parent node in which to insert.
-          * @param {DOMElement} childNode Child node to insert.
-          * @param {number} index Index at which to insert the child.
-          * @internal
-          */
-         var insertChildAt = function insertChildAt(parentNode, childNode, nextChild, parent) {
+        while (idxFrom < idxTo) {
 
-                  // By exploiting arrays returning `undefined` for an undefined index, we can
-                  // rely exclusively on `insertBefore(node, null)` instead of also using
-                  // `appendChild(node)`. However, using `undefined` is not allowed by all
-                  // browsers so we must replace it with `null`.
-                  parentNode.insertBefore(childNode.render(parent), nextChild ? nextChild.node : null);
-         };
+            key = children[idxFrom].key;
+            if (key != null) {
 
-         var moveChild = function moveChild(container, childNode, toChildNode, after) {
+                map[key] = idxFrom;
+            }
+            ++idxFrom;
+        }
 
-                  var doc = document,
-                      childDomNode = childNode.node,
-                      toChildDomNode = toChildNode.node,
-                      activeDomNode = doc.activeElement;
+        return map;
+    };
 
-                  if (after) {
+    /**
+     * Inserts `childNode` as a child of `parentNode` at the `index`.
+     *
+     * @param {DOMElement} parentNode Parent node in which to insert.
+     * @param {DOMElement} childNode Child node to insert.
+     * @param {number} index Index at which to insert the child.
+     * @internal
+     */
+    var insertChildAt = function insertChildAt(parentNode, childNode, nextChild, parent) {
 
-                           var nextSiblingDomNode = toChildDomNode.nextSibling;
+        // By exploiting arrays returning `undefined` for an undefined index, we can
+        // rely exclusively on `insertBefore(node, null)` instead of also using
+        // `appendChild(node)`. However, using `undefined` is not allowed by all
+        // browsers so we must replace it with `null`.
+        parentNode.insertBefore(childNode.render(parent), nextChild ? nextChild.node : null);
+    };
 
-                           if (nextSiblingDomNode) {
-                                    container.insertBefore(childDomNode, nextSiblingDomNode);
-                           } else {
-                                    container.appendChild(childDomNode);
-                           }
-                  } else {
-                           container.insertBefore(childDomNode, toChildDomNode);
-                  }
+    var moveChild = function moveChild(container, child, nextChild, after) {
 
-                  if (doc.activeElement !== activeDomNode) {
-                           activeDomNode.focus();
-                  }
-         };
+        var doc = document,
+            activeNode = doc.activeElement,
+            domChild = child.node,
+            domRefChild = nextChild && nextChild.node;
 
-         var patchChildren = function patchChildren(container, oldChildren, children, parent) {
+        if (after) {
 
-                  var oldChildrenLen = oldChildren.length,
-                      childrenLen = children.length;
+            var nextSiblingDomNode = domRefChild.nextSibling;
 
-                  // no old child nodes, insert all child nodes from 'children'
-                  if (oldChildrenLen === 0) {
+            if (nextSiblingDomNode) {
+                container.insertBefore(domChild, nextSiblingDomNode);
+            } else {
+                container.appendChild(domChild);
+            }
+        } else {
+            container.insertBefore(domChild, domRefChild);
+        }
 
-                           var iB = 0;
+        if (doc.activeElement !== activeNode) {
+            activeNode.focus();
+        }
+    };
 
-                           for (; iB < childrenLen; iB++) {
+    var patchChildren = function patchChildren(container, oldChildren, children, parent) {
 
-                                    appendChild(container, children[iB], parent);
-                           }
+        var oldChildrenLen = oldChildren.length,
+            childrenLen = children.length;
 
-                           return;
-                  }
+        // no old child nodes, insert all child nodes from 'children'
+        if (oldChildrenLen === 0) {
 
-                  // no new child nodes, remove all child nodes from 'oldChildren'
-                  if (childrenLen === 0) {
+            var iB = 0;
 
-                           detach(oldChildren);
+            for (; iB < childrenLen; iB++) {
 
-                           return;
-                  }
+                appendChild(container, children[iB], parent);
+            }
 
-                  // if both 'oldChildren' and 'children' has only one child node...
-                  if (oldChildrenLen < 2 && childrenLen < 2) {
+            return;
+        }
 
-                           if (oldChildren[0].equalTo(children[0])) {
+        // no new child nodes, remove all child nodes from 'oldChildren'
+        if (childrenLen === 0) {
 
-                                    oldChildren[0].patch(children[0]);
-                           } else {
+            detach(oldChildren);
 
-                                    oldChildren[0].detach();
-                                    container.appendChild(children[0].render(parent));
-                           }
+            return;
+        }
 
-                           return;
-                  }
+        // if both 'oldChildren' and 'children' has only one child node...
+        if (oldChildrenLen < 2 && childrenLen < 2) {
 
-                  // Fast path if only 'children' has one child node
-                  if (childrenLen === 1) {
+            if (oldChildren[0].equalTo(children[0])) {
 
-                           var idx = 0;
+                oldChildren[0].patch(children[0]);
+            } else {
 
-                           while (idx < oldChildrenLen) {
+                oldChildren[0].detach();
+                container.appendChild(children[0].render(parent));
+            }
 
-                                    oldChildren[idx++].detach();
-                                    appendChild(container, children[0], parent);
-                           }
+            return;
+        }
 
-                           return;
-                  }
+        // Fast path if only 'children' has one child node
+        if (childrenLen === 1) {
 
-                  // Everything else...
-                  var oldStartIdx = 0,
-                      startIdx = 0,
-                      oldEndIdx = oldChildrenLen - 1,
-                      oldStartChild = oldChildren[0],
-                      oldEndChild = oldChildren[oldEndIdx],
-                      endIdx = childrenLen - 1,
-                      startChild = children[0],
-                      endChild = children[endIdx],
-                      oldChildrenKeys = undefined,
-                      index = undefined,
-                      foundAChild = undefined;
+            var idx = 0;
 
-                  while (oldStartIdx <= oldEndIdx && startIdx <= endIdx) {
+            while (idx < oldChildrenLen) {
 
-                           if (oldStartChild == null) {
+                oldChildren[idx++].detach();
+                appendChild(container, children[0], parent);
+            }
 
-                                    ++oldStartIdx;
-                           } else if (oldEndChild == null) {
+            return;
+        }
 
-                                    --oldEndIdx;
-                           } else if (oldStartChild.equalTo(startChild)) {
+        // Everything else...
+        var oldStartIdx = 0,
+            startIdx = 0,
+            oldEndIdx = oldChildrenLen - 1,
+            oldStartChild = oldChildren[0],
+            oldEndChild = oldChildren[oldEndIdx],
+            endIdx = childrenLen - 1,
+            startChild = children[0],
+            endChild = children[endIdx],
+            oldChildrenKeys = undefined,
+            index = undefined,
+            foundAChild = undefined;
 
-                                    oldStartChild.patch(startChild);
-                                    ++oldStartIdx;
-                                    ++startIdx;
+        while (oldStartIdx <= oldEndIdx && startIdx <= endIdx) {
 
-                                    // Update nodes with the same key at the end.	
-                           } else if (oldEndChild.equalTo(endChild)) {
+            if (oldStartChild == null) {
 
-                                             oldEndChild.patch(endChild);
-                                             --oldEndIdx;
-                                             --endIdx;
+                ++oldStartIdx;
+            } else if (oldEndChild == null) {
 
-                                             // Move nodes from left to right.	
-                                    } else if (oldStartChild.equalTo(endChild)) {
+                --oldEndIdx;
+            } else if (oldStartChild.equalTo(startChild)) {
 
-                                                      oldStartChild.patch(endChild);
-                                                      moveChild(container, oldStartChild, oldEndChild, true);
-                                                      ++oldStartIdx;
-                                                      --endIdx;
+                oldStartChild.patch(startChild);
+                ++oldStartIdx;
+                ++startIdx;
 
-                                                      // Move nodes from right to left.
-                                             } else if (oldEndChild.equalTo(startChild)) {
+                // Update nodes with the same key at the end.	
+            } else if (oldEndChild.equalTo(endChild)) {
 
-                                                               oldEndChild.patch(startChild);
-                                                               moveChild(container, oldEndChild, oldStartChild, false);
-                                                               --oldEndIdx;
-                                                               ++startIdx;
-                                                      } else {
+                    oldEndChild.patch(endChild);
+                    --oldEndIdx;
+                    --endIdx;
 
-                                                               oldChildrenKeys || (oldChildrenKeys = buildKeys(oldChildren, oldStartIdx, oldEndIdx));
+                    // Move nodes from left to right.	
+                } else if (oldStartChild.equalTo(endChild)) {
 
-                                                               if ((index = oldChildrenKeys[startChild.key]) != null) {
+                        oldStartChild.patch(endChild);
+                        moveChild(container, oldStartChild, oldEndChild, true);
+                        ++oldStartIdx;
+                        --endIdx;
 
-                                                                        foundAChild = oldChildren[index];
-                                                                        oldChildren[index] = null;
-                                                                        foundAChild.patch(startChild);
-                                                                        moveChild(container, foundAChild, oldStartChild, false);
-                                                               } else {
+                        // Move nodes from right to left.
+                    } else if (oldEndChild.equalTo(startChild)) {
 
-                                                                        insertChildAt(container, startChild, oldStartChild, parent);
-                                                               }
-                                                               ++startIdx;
-                                                      }
+                            oldEndChild.patch(startChild);
+                            moveChild(container, oldEndChild, oldStartChild, false);
+                            --oldEndIdx;
+                            ++startIdx;
+                        } else {
 
-                           oldStartChild = oldChildren[oldStartIdx];
-                           endChild = children[endIdx];
-                           oldEndChild = oldChildren[oldEndIdx];
-                           startChild = children[startIdx];
-                  }
+                            oldChildrenKeys || (oldChildrenKeys = buildKeys(oldChildren, oldStartIdx, oldEndIdx));
 
-                  // All old child nodes are updated, insert the remaing new child nodes.
-                  if (oldStartIdx > oldEndIdx) {
+                            if ((index = oldChildrenKeys[startChild.key]) != null) {
 
-                           for (; startIdx <= endIdx; startIdx++) {
+                                foundAChild = oldChildren[index];
+                                oldChildren[index] = null;
+                                foundAChild.patch(startChild);
+                                moveChild(container, foundAChild, oldStartChild, false);
+                            } else {
 
-                                    if (startIdx < childrenLen - 1) {
+                                insertChildAt(container, startChild, oldStartChild, parent);
+                            }
+                            ++startIdx;
+                        }
 
-                                             insertChildAt(container, children[startIdx], children[endIdx + 1], parent);
-                                    } else {
+            oldStartChild = oldChildren[oldStartIdx];
+            endChild = children[endIdx];
+            oldEndChild = oldChildren[oldEndIdx];
+            startChild = children[startIdx];
+        }
 
-                                             appendChild(container, children[startIdx], parent);
-                                    }
-                           }
-                           // All nodes from children are updated, remove the rest from oldChildren.	
-                  } else if (startIdx > endIdx) {
+        // All old child nodes are updated, insert the remaing new child nodes.
+        if (oldStartIdx > oldEndIdx) {
 
-                                    for (; oldStartIdx <= oldEndIdx; oldStartIdx++) {
+            for (; startIdx <= endIdx; startIdx++) {
 
-                                             if (oldChildren[oldStartIdx] != null) {
+                if (startIdx < childrenLen - 1) {
 
-                                                      oldChildren[oldStartIdx].detach();
-                                             }
-                                    }
-                           }
-         };
+                    insertChildAt(container, children[startIdx], children[endIdx + 1], parent);
+                } else {
 
-         var patch = function patch(ref) {
+                    appendChild(container, children[startIdx], parent);
+                }
+            }
+            // All nodes from children are updated, remove the rest from oldChildren.	
+        } else if (startIdx > endIdx) {
 
-                  if (this.equalTo(ref)) {
-                           var node = this.node;
-                           var hooks = this.hooks;
-                           var events = this.events;
-                           var attrs = this.attrs;
-                           var props = this.props;
+                for (; oldStartIdx <= oldEndIdx; oldStartIdx++) {
 
-                           ref.node = this.node;
+                    if (oldChildren[oldStartIdx] != null) {
 
-                           // patch children
-                           if (this.children !== ref.children) {
+                        oldChildren[oldStartIdx].detach();
+                    }
+                }
+            }
+    };
 
-                                    patchChildren(ref.node, this.children, ref.children);
-                           }
+    var patch = function patch(ref) {
 
-                           // patch attributes
-                           if (attrs !== ref.attrs) {
+        if (this.equalTo(ref)) {
+            var node = this.node;
+            var hooks = this.hooks;
+            var events = this.events;
+            var attrs = this.attrs;
+            var props = this.props;
+            var children = this.children;
 
-                                    patchAttributes(ref.node, attrs, ref.attrs);
-                           }
+            ref.node = this.node;
 
-                           // patch properties
-                           if (props !== ref.props) {
+            // patch children
+            if (children !== ref.children) {
 
-                                    patchProperties(ref.node, props, ref.props);
-                           }
+                patchChildren(ref.node, children, ref.children);
+            }
 
-                           if (events !== ref.events) {
+            // patch attributes
+            if (attrs !== ref.attrs) {
 
-                                    // Handle events
-                                    if (ref.events) {
+                patchAttributes(ref.node, attrs, ref.attrs);
+            }
 
-                                             node._handler = ref;
-                                    } else if (events !== undefined) {
+            // patch properties
+            if (props !== ref.props) {
 
-                                             node._handler = undefined;
-                                    }
-                           }
+                patchProperties(ref.node, props, ref.props);
+            }
 
-                           // Handle hooks
-                           if (hooks !== undefined) {
+            if (events !== ref.events) {
 
-                                    if (hooks.updated) {
+                // Handle events
+                if (ref.events) {
 
-                                             hooks.updated(this, node);
-                                    }
-                           }
+                    node._handler = ref;
+                } else if (events !== undefined) {
 
-                           return node;
-                  }
+                    node._handler = undefined;
+                }
+            }
 
-                  this.detach(false);
-                  return ref.render();
-         };
+            // Handle hooks
+            if (hooks !== undefined) {
 
-         /**
-          * Removes the DOM node attached to the virtual node.
-          */
-         var prototype_detach = function prototype_detach(shouldDestroy) {
-                  var children = this.children;
-                  var hooks = this.hooks;
+                if (hooks.updated) {
 
-                  /**
-                   * If any children, trigger the 'detach' hook on each child node
-                   */
-                  if (children.length) {
+                    hooks.updated(this, node);
+                }
+            }
 
-                           if (children.length === 1) {
+            return node;
+        }
 
-                                    var firstChild = children[0];
+        this.detach(false);
+        return ref.render();
+    };
 
-                                    if (firstChild.hooks && firstChild.hooks.detach) {
+    /**
+     * Removes the DOM node attached to the virtual node.
+     */
+    var prototype_detach = function prototype_detach(shouldDestroy) {
+        var children = this.children;
+        var hooks = this.hooks;
 
-                                             firstChild.hooks.detach(firstChild, firstChild.node);
-                                    }
-                           } else {
+        /**
+         * If any children, trigger the 'detach' hook on each child node
+         */
+        if (children.length) {
 
-                                    var index = children.length,
-                                        node = undefined;
+            if (children.length === 1) {
 
-                                    while (index--) {
+                var firstChild = children[0];
 
-                                             node = children[index];
+                if (firstChild.hooks && firstChild.hooks.detach) {
 
-                                             if (node.hooks && node.hooks.detach) {
+                    firstChild.hooks.detach(firstChild, firstChild.node);
+                }
+            } else {
 
-                                                      node.hooks.detach(node, node.node);
-                                             }
-                                    }
-                           }
-                  }
+                var index = children.length,
+                    node = undefined;
 
-                  /**
-                   * Trigger the 'detach' hook on the root node
-                   *
-                   */
-                  if (hooks && hooks.detach) {
+                while (index--) {
 
-                           hooks.detach(this, this.node);
-                  }
+                    node = children[index];
 
-                  // Destroy the node...
-                  if (shouldDestroy !== false) {
+                    if (node.hooks && node.hooks.detach) {
 
-                           this.destroy();
-                  }
-         };
+                        node.hooks.detach(node, node.node);
+                    }
+                }
+            }
+        }
 
-         /**
-           * Checks if two virtual nodes are equal to each other.
-           *
-           * @param {Object} node
-           * @return {boolean}
-           */
-         var equalTo = function equalTo(node) {
+        /**
+         * Trigger the 'detach' hook on the root node
+         *
+         */
+        if (hooks && hooks.detach) {
 
-                  return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
-         };
+            hooks.detach(this, this.node);
+        }
 
-         /**
-          * Initialize the virtual DOM element
-          *
-          * @param {String} tagName 
-          * @param {Object|null} options
-          * @param {String|Array|null} children
-          */
-         var init = function init(tagName, options, children) {
+        // Destroy the node...
+        if (shouldDestroy !== false) {
 
-                  options = options || {};
+            this.destroy();
+        }
+    };
 
-                  /**
-                   * The node name for this node.
-                   */
-                  this.tagName = tagName || "div";
+    /**
+      * Checks if two virtual nodes are equal to each other.
+      *
+      * @param {Object} node
+      * @return {boolean}
+      */
+    var equalTo = function equalTo(node) {
 
-                  /**
-                   * List of children nodes. 
-                   */
-                  this.children = children || [];
+        return !(this.key !== node.key || this.tagName !== node.tagName || this.flag !== node.flag || this.namespace !== node.namespace || this.typeExtension !== node.typeExtension);
+    };
 
-                  /**
-                   * The properties and their values.
-                   */
-                  this.props = options.props || null;
+    /**
+     * Initialize the virtual DOM element
+     *
+     * @param {String} tagName 
+     * @param {Object|null} options
+     * @param {String|Array|null} children
+     */
+    var init = function init(tagName, options, children) {
 
-                  /**
-                   * The attributes and their values.
-                   */
-                  this.attrs = options.attrs || null;
+        options = options || {};
 
-                  /**
-                   * Events
-                   */
-                  this.events = options.events;
+        /**
+         * The node name for this node.
+         */
+        this.tagName = tagName || "div";
 
-                  /**
-                   * Callbacks / lifecycle hooks
-                   */
-                  this.hooks = options.hooks;
+        /**
+         * List of children nodes. 
+         */
+        this.children = children || [];
 
-                  /**
-                   * Reference to the virtual node. It will be available after the virtual node is
-                   * created or patched. 
-                   */
-                  this.node = null;
+        /**
+         * The properties and their values.
+         */
+        this.props = options.props || null;
 
-                  /**
-                   * Add data 
-                   */
-                  this.data = options.data;
+        /**
+         * The attributes and their values.
+         */
+        this.attrs = options.attrs || null;
 
-                  /**
-                   * The key used to identify this node, used to preserve DOM nodes when they
-                   * move within their parent.
-                   */
-                  this.key = options.key != null ? options.key : undefined;
+        /**
+         * Events
+         */
+        this.events = options.events;
 
-                  /**
-                   * Namespace indicates the closest HTML namespace as it cascades down from an ancestor, or a given namespace
-                   */
-                  this.namespace = options.attrs && options.attrs.xmlns || null;
+        /**
+         * Callbacks / lifecycle hooks
+         */
+        this.hooks = options.hooks;
 
-                  /**
-                   * type extensions
-                   */
-                  this.typeExtension = options.attrs && options.attrs.is || null;
+        /**
+         * Reference to the virtual node. It will be available after the virtual node is
+         * created or patched. 
+         */
+        this.node = null;
 
-                  /**
-                  	 * De-activate use of HTML properties is set to true for SVG and MathML namespaces
-                  	 */
-                  this.restricted = null;
-         };
+        /**
+         * Add data 
+         */
+        this.data = options.data;
 
-         /**
-          * Reference to the virtual node's flag
-          */
-         var prototype_flag = flag.ELEMENT;
+        /**
+         * The key used to identify this node, used to preserve DOM nodes when they
+         * move within their parent.
+         */
+        this.key = options.key != null ? options.key : undefined;
 
-         var createElement = function createElement(namespace, tagName, typeExtension) {
+        /**
+         * Namespace indicates the closest HTML namespace as it cascades down from an ancestor, or a given namespace
+         */
+        this.namespace = options.attrs && options.attrs.xmlns || null;
 
-                  if (namespace == null) {
+        /**
+         * type extensions
+         */
+        this.typeExtension = options.attrs && options.attrs.is || null;
 
-                           if (typeExtension) {
+        /**
+        	 * De-activate use of HTML properties is set to true for SVG and MathML namespaces
+        	 */
+        this.restricted = null;
+    };
 
-                                    return document.createElement(tagName, typeExtension);
-                           }
+    /**
+     * Reference to the virtual node's flag
+     */
+    var flag = 0x0001;
 
-                           return document.createElement(tagName);
-                  }
+    var createElement = function createElement(namespace, tagName, typeExtension) {
 
-                  if (typeExtension) {
+        if (namespace == null) {
 
-                           return document.createElementNS(namespace, tagName, typeExtension);
-                  }
+            if (typeExtension) {
 
-                  return document.createElementNS(namespace, tagName);
-         };
+                return document.createElement(tagName, typeExtension);
+            }
 
-         /**
-          * Creates and return the corresponding DOM node.
-          * @param {Object} parent
-          * @return {Object} A DOM node.
-          *
-          * NOTE!!
-          *
-          * Because of IE and Edge browsers need to have the node created
-          * and appended to the parent container before attaching the children,
-          * we are 'forced' to have a separate 'create' method.
-          */
-         var create = function create(parent) {
+            return document.createElement(tagName);
+        }
 
-                  // create a new virtual node
-                  if (this.node == null) {
+        if (typeExtension) {
 
-                           if (this.namespace == null) {
+            return document.createElementNS(namespace, tagName, typeExtension);
+        }
 
-                                    if (parent && parent.namespace) {
+        return document.createElementNS(namespace, tagName);
+    };
 
-                                             this.namespace = parent.namespace;
-                                    } else {
+    /**
+     * Creates and return the corresponding DOM node.
+     * @param {Object} parent
+     * @return {Object} A DOM node.
+     *
+     * NOTE!!
+     *
+     * Because of IE and Edge browsers need to have the node created
+     * and appended to the parent container before attaching the children,
+     * we are 'forced' to have a separate 'create' method.
+     */
+    var create = function create(parent) {
 
-                                             var tagName = this.tagName;
+        // create a new virtual node
+        if (this.node == null) {
 
-                                             // use SVG namespace, if this is an <svg> element
-                                             if (tagName === "svg") {
+            if (this.namespace == null) {
 
-                                                      this.namespace = "http://www.w3.org/2000/svg";
+                if (parent && parent.namespace) {
 
-                                                      // ...or MATH namespace, if this is an <math> element
-                                             } else if (tagName === "math") {
+                    this.namespace = parent.namespace;
+                } else {
 
-                                                               this.namespace = "http://www.w3.org/1998/Math/MathML";
-                                                      }
-                                    }
-                           }
+                    var tagName = this.tagName;
 
-                           this.node = createElement(this.namespace, this.tagName, this.typeExtension);
-                  }
+                    // use SVG namespace, if this is an <svg> element
+                    if (tagName === "svg") {
 
-                  return this.node;
-         };
+                        this.namespace = "http://www.w3.org/2000/svg";
 
-         /**
-          * Initialize a new virtual element
-          *
-          * @param  {String} tagName
-          * @param  {Object} options
-          * @param  {Array}  children An array of child virtual dom nodes.
-          */
-         function Element(tagName, options, children) {
+                        // ...or MATH namespace, if this is an <math> element
+                    } else if (tagName === "math") {
 
-                  this.init(tagName, options, children);
-         }
+                            this.namespace = "http://www.w3.org/1998/Math/MathML";
+                        }
+                }
+            }
 
-         // Shortcut to improve speed and size
-         var Element__proto = Element.prototype;
+            this.node = createElement(this.namespace, this.tagName, this.typeExtension);
+        }
 
-         // Defining javaScript prototype functions separately are faster than
-         // in a dictionary
-         Element__proto.append = prototype_append;
-         Element__proto.toHtml = toHtml;
-         Element__proto.render = render;
-         Element__proto.patch = patch;
-         Element__proto.destroy = destroy;
-         Element__proto.detach = prototype_detach;
-         Element__proto.equalTo = equalTo;
-         Element__proto.init = init;
-         Element__proto.flag = prototype_flag;
-         Element__proto.create = create;
+        return this.node;
+    };
 
-         /**
-          * Initialize the virtual tree
-          */
-         var prototype_init = function prototype_init() {
+    /**
+     * Initialize a new virtual element
+     *
+     * @param  {String} tagName
+     * @param  {Object} options
+     * @param  {Array}  children An array of child virtual dom nodes.
+     */
+    function Element(tagName, options, children) {
 
-                  /** Container to hold all mounted virtual trees. */
-                  this.mountContainer = {};
-         };
+        this.init(tagName, options, children);
+    }
 
-         /**
-          * Mounts a virtual tree into a passed selector.
-          *
-          * @param {String|Object}   selector
-          * @param {Function|Object} factory
-          * @param {Object}          data
-          */
-         var prototype_mount = function prototype_mount(selector, factory, data) {
+    // Shortcut to improve speed and size
+    var Element__proto = Element.prototype;
 
-                  return this.combine(selector, factory, data, function (root, nodes) {
+    // Defining javaScript prototype functions separately are faster than
+    // in a dictionary
+    Element__proto.append = prototype_append;
+    Element__proto.toHtml = toHtml;
+    Element__proto.render = render;
+    Element__proto.patch = patch;
+    Element__proto.destroy = destroy;
+    Element__proto.detach = prototype_detach;
+    Element__proto.equalTo = equalTo;
+    Element__proto.init = init;
+    Element__proto.flag = flag;
+    Element__proto.create = create;
 
-                           // Normalize the nodes
-                           nodes = normalizeChildren(nodes);
+    /**
+     * Initialize the virtual tree
+     */
+    var prototype_init = function prototype_init() {
 
-                           // Render children
-                           if (nodes && nodes.length) {
+        /** Container to hold all mounted virtual trees. */
+        this.mountContainer = {};
+    };
 
-                                    var i = nodes.length;
+    /**
+     * Mounts a virtual tree into a passed selector.
+     *
+     * @param {String|Object}   selector
+     * @param {Function|Object} factory
+     * @param {Object}          data
+     */
+    var prototype_mount = function prototype_mount(selector, factory, data) {
 
-                                    while (i--) {
+        return this.combine(selector, factory, data, function (root, nodes) {
 
-                                             // ignore incompatible children
-                                             if (nodes[i]) {
+            // Normalize the nodes
+            nodes = normalizeChildren(nodes);
 
-                                                      root.appendChild(nodes[i].render());
-                                             }
-                                    }
-                           }
+            // Render children
+            if (nodes && nodes.length) {
 
-                           return nodes;
-                  });
-         };
+                var i = nodes.length;
 
-         /**
-          * Unmounts a virtual tree.
-          *
-          * @param {String} uuid
-          * @param {Function} done
-          */
-         var unmount = function unmount(uuid) {
-                  var _this2 = this;
+                while (i--) {
 
-                  if (uuid != null) {
+                    // ignore incompatible children
+                    if (nodes[i]) {
 
-                           // Find the mounted tree...
-                           var mount = this.mountContainer[uuid];
+                        root.appendChild(nodes[i].render());
+                    }
+                }
+            }
 
-                           // ... and if it exist, and are mounted..
-                           if (mount) {
+            return nodes;
+        });
+    };
 
-                                    // ... detach all child nodes
-                                    detach(mount.children);
+    /**
+     * Unmounts a virtual tree.
+     *
+     * @param {String} uuid
+     * @param {Function} done
+     */
+    var unmount = function unmount(uuid) {
+        var _this2 = this;
 
-                                    // Remove all mount children to avoid JS engine cache issues
-                                    // Ref.: Gaydenko
+        if (uuid != null) {
+            (function () {
 
-                                    delete mount.children;
+                // Find the mounted tree...
+                var mounted = _this2.mountContainer[uuid];
 
-                                    // Remove everything else if no children
-                                    if (!mount.children) {
-                                             delete mount.root.rootID;
-                                             delete this.mountContainer[uuid];
-                                    }
-                           }
-                  } else {
+                // ... and if it exist, and are mounted..
+                if (mounted) {
 
-                           // Remove the all mounted trees
-                           forIn(this.mountContainer, function (uid) {
+                    var unmountFn = function unmountFn() {
 
-                                    _this2.unmount(uid);
-                           });
-                  }
-         };
+                        // ... detach all child nodes
+                        detach(mounted.children);
 
-         /**
-          * Updates children of a virtual node.
-          *
-          * @param {Object} container
-          * @param {Object} childrenA
-          * @param {Object} childrenB
-          */
-         var updateChildren = function updateChildren(container, childrenA, childrenB) {
+                        // Remove everything else...
+                        delete mounted.root.rootID;
+                        delete _this2.mountContainer[uuid];
+                    };
 
-                  if (childrenA !== childrenB) {
+                    unmountFn();
+                }
+            })();
+        } else {
 
-                           if (typeof childrenB === "function") {
+            // Remove the all mounted trees
+            forIn(this.mountContainer, function (uid) {
 
-                                    childrenB = childrenB(childrenB);
-                           }
+                _this2.unmount(uid);
+            });
+        }
+    };
 
-                           if (!isArray(childrenB)) {
+    /**
+     * Updates children of a virtual node.
+     *
+     * @param {Object} container
+     * @param {Object} oldChildren
+     * @param {Object} newChildren
+     */
+    var updateChildren = function updateChildren(container, oldChildren, newChildren) {
 
-                                    childrenB = [childrenB];
-                           }
+        if (oldChildren !== newChildren) {
 
-                           patchChildren(container, childrenA, childrenB);
+            if (typeof newChildren === "function") {
 
-                           return childrenB;
-                  }
-         };
+                newChildren = newChildren(newChildren);
+            }
 
-         /**
-          * Updates a virtual Tree
-          *
-          * @param {String|number} uuid
-          * @param {String} node
-          */
-         var update = function update(uuid, node) {
-                  var _this3 = this;
+            if (newChildren.flag) {
 
-                  if (arguments.length) {
+                newChildren = [newChildren];
+            }
 
-                           // get the mounted virtual tree
-                           var mount = this.mountContainer[uuid];
+            patchChildren(container, oldChildren, newChildren);
 
-                           if (mount) {
+            return newChildren;
+        }
+    };
 
-                                    if (!node) {
+    /**
+     * Updates a virtual Tree
+     *
+     * @param {String|number} uuid
+     * @param {String} node
+     */
+    var update = function update(uuid, node) {
+        var _this3 = this;
 
-                                             node = mount.factory;
-                                    }
+        if (arguments.length) {
 
-                                    // update and re-order the child nodes         
-                                    mount.children = updateChildren(mount.root, mount.children, node);
-                           }
-                  } else {
+            // get the mounted virtual tree
+            var mount = this.mountContainer[uuid];
 
-                           // update all mounted virtual trees
-                           forIn(this.mountContainer, function (uid) {
-                                    _this3.update(uid);
-                           });
-                  }
-         };
+            if (mount) {
 
-         var mounted = function mounted(uuid) {
+                if (!node) {
 
-                  if (uuid != null) {
-                           return this.mountContainer[uuid];
-                  }
+                    node = mount.factory;
+                }
 
-                  return this.mountContainer;
-         };
+                // update and re-order the child nodes         
+                mount.children = updateChildren(mount.root, mount.children, node);
+            }
+        } else {
 
-         /**
-          * Find a DOM node by it's CSS selector
-          *
-          * @param {String|DOMElement} selector
-          * @param {DOMElement|null} context
-          * @return {DOMElement} The node where to mount the virtual tree
-          */
-         var findDOMNode = function findDOMNode(selector, context) {
+            // update all mounted virtual trees
+            forIn(this.mountContainer, function (uid) {
+                _this3.update(uid);
+            });
+        }
+    };
 
-                  if (context == null) {
+    var prototype_mounted = function prototype_mounted(uuid) {
 
-                           context = document;
-                  }
+        return uuid != null ? this.mountContainer[uuid] : this.mountContainer;
+    };
 
-                  if (typeof selector === "string") {
+    /**
+     * Find a DOM node by it's CSS selector
+     *
+     * @param {String|DOMElement} selector
+     * @param {DOMElement|null} context
+     * @return {DOMElement} The node where to mount the virtual tree
+     */
+    var findDOMNode = function findDOMNode(selector, context) {
 
-                           return context.querySelector(selector);
-                  }
+        if (context == null) {
 
-                  if (selector.nodeType === 1) {
+            context = document;
+        }
 
-                           return selector;
-                  }
-         };
+        if (typeof selector === "string") {
 
-         /**
-          * Applies a virtual tree into a passed selector.
-          *
-          * @param {String|Object}   selector 
-          * @param {Function|Object} factory
-          * @param {Object}          container
-          * @param {function}        children
-          */
-         var combine = function combine(selector, factory, container, children) {
-                  if (container === undefined) container = {};
+            return context.querySelector(selector);
+        }
 
-                  // Find the selector where we are going to mount the virtual tree
-                  var root = findDOMNode(selector),
-                      mountId = undefined;
+        if (selector.nodeType === 1) {
 
-                  if (root != null) {
+            return selector;
+        }
+    };
 
-                           // Unmount if already mounted
-                           if (root.rootID) {
+    /**
+     * Applies a virtual tree into a passed selector.
+     *
+     * @param {String|Object}   selector 
+     * @param {Function|Object} factory
+     * @param {Object}          container
+     * @param {function}        children
+     */
+    var combine = function combine(selector, factory, container, children) {
+        if (container === undefined) container = {};
 
-                                    this.unmount(root.rootID);
-                           }
+        // Find the selector where we are going to mount the virtual tree
+        var root = findDOMNode(selector);
 
-                           // use 'container' id if it exist, or...
-                           if (container.mountId) {
+        if (root != null) {
 
-                                    mountId = container.mountId;
-                           } else {
+            var mountId = undefined;
 
-                                    // ... create a unique identifier
-                                    mountId = this.guid();
-                           }
+            // Unmount if already mounted
+            if (root.rootID) {
 
-                           container.root = root;
-                           container.factory = factory ? factory : function () {};
-                           container.children = children ? children(root, factory) : [];
-                           this.mountContainer[mountId] = container;
+                this.unmount(root.rootID);
+            }
 
-                           root.rootID = mountId;
+            // use 'container' id if it exist, or...
+            if (container.mountId) {
 
-                           return root.rootID;
-                  }
-         };
+                mountId = container.mountId;
+            } else {
 
-         /**
-          * Append a virtual tree onto a previously rendered DOM tree.
-          *
-          * @param {String|Object} selector
-          * @param {Function|Object} factory
-          * @param {Object} data
-          */
-         var tree_prototype_append = function tree_prototype_append(selector, factory, data) {
+                // ... create a unique identifier
+                mountId = this.guid();
+            }
 
-                  return this.combine(selector, factory, data, append);
-         };
+            container.root = root;
+            container.factory = factory ? factory : function () {};
+            container.children = children ? children(root, factory) : [];
+            this.mountContainer[mountId] = container;
 
-         // Generate a unique identifier
-         // - source: ReactivejS ( early stage )
-         var uuidFunc = function uuidFunc(char) {
-                  return char == "x" ? Math.random() * 16 | 0 : (Math.random() * 16 | 0 & 0x3 | 0x8).toString(16);
-         };
-         var guid = function guid() {
-                  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, uuidFunc);
-         };
+            root.rootID = mountId;
 
-         /* Generates a unique id */
-         var prototype_guid = function prototype_guid() {
+            return root.rootID;
+        }
+    };
 
-                  return guid();
-         };
+    /**
+     * Append a virtual tree onto a previously rendered DOM tree.
+     *
+     * @param {String|Object} selector
+     * @param {Function|Object} factory
+     * @param {Object} data
+     */
+    var tree_prototype_append = function tree_prototype_append(selector, factory, data) {
 
-         /**
-          * Virtual Tree
-          */
-         function Tree() {
+        return this.combine(selector, factory, data, append);
+    };
 
-                  this.init();
-         }
+    // Generate a unique identifier
+    var uuidFunc = function uuidFunc(char) {
+        return char == "x" ? Math.random() * 16 | 0 : (Math.random() * 16 | 0 & 0x3 | 0x8).toString(16);
+    };
 
-         var Tree__proto = Tree.prototype;
+    var guid = function guid() {
 
-         Tree__proto.init = prototype_init;
-         Tree__proto.combine = combine;
-         Tree__proto.append = tree_prototype_append;
-         Tree__proto.mount = prototype_mount;
-         Tree__proto.unmount = unmount;
-         Tree__proto.update = update;
-         Tree__proto.mounted = mounted;
-         Tree__proto.guid = prototype_guid;
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, uuidFunc);
+    };
 
-         var capturableCfg__captuable = {};
+    /**
+     * Virtual Tree
+     */
+    function Tree() {
 
-         ("blur focus mouseenter mouseleave change input submit dragstart drag dragenter dragover " + "dragleave dragend drop contextmenu wheel copy cut paste click dblclick keydown keypress keyup").split(" ").forEach(function (evt) {
+        this.init();
+    }
 
-                  capturableCfg__captuable[evt] = true;
-         });
+    var Tree__proto = Tree.prototype;
 
-         var capturableCfg = capturableCfg__captuable;
+    Tree__proto.init = prototype_init;
+    Tree__proto.combine = combine;
+    Tree__proto.append = tree_prototype_append;
+    Tree__proto.mount = prototype_mount;
+    Tree__proto.unmount = unmount;
+    Tree__proto.update = update;
+    Tree__proto.mounted = prototype_mounted;
+    Tree__proto.guid = guid;
 
-         /**
-          * Gets the target node from a native browser event by accounting for
-          * inconsistencies in browser DOM APIs.
-          *
-          * @param {object} nativeEvent Native browser event.
-          * @return {DOMEventTarget} Target node.
-          */
-         var getEventTarget = function getEventTarget(nativeEvent) {
+    var capturableCfg__captuable = {};
 
-                  var target = nativeEvent.target || window;
-                  // Safari may fire events on text nodes (Node.TEXT_NODE is 3).
-                  // @see http://www.quirksmode.org/js/events_properties.html
-                  return target.nodeType === 3 ? target.parentNode : target;
-         };
+    ("blur focus mouseenter mouseleave change input submit dragstart drag dragenter dragover " + "dragleave dragend drop contextmenu wheel copy cut paste click dblclick keydown keypress keyup").split(" ").forEach(function (evt) {
 
-         var createHandler = function createHandler(eventName, delegator, props) {
+        capturableCfg__captuable[evt] = true;
+    });
 
-                  var target = delegator.target.parentNode,
-                      node = undefined,
-                      delegateHandler = delegator._delegateHandler;
+    var capturableCfg = capturableCfg__captuable;
 
-                  return function (evt) {
+    /**
+     * Gets the target node from a native browser event by accounting for
+     * inconsistencies in browser DOM APIs.
+     *
+     * @param {object} nativeEvent Native browser event.
+     * @return {DOMEventTarget} Target node.
+     */
+    var getEventTarget = function getEventTarget(nativeEvent) {
 
-                           evt.isPropagationStopped = false;
-                           evt.delegateTarget = getEventTarget(evt);
-                           evt.stopPropagation = function () {
+        var target = nativeEvent.target || window;
+        // Safari may fire events on text nodes (Node.TEXT_NODE is 3).
+        // @see http://www.quirksmode.org/js/events_properties.html
+        return target.nodeType === 3 ? target.parentNode : target;
+    };
 
-                                    this.isPropagationStopped = true;
-                           };
+    var createHandler = function createHandler(eventName, delegator, props) {
 
-                           while ((node = evt.delegateTarget) !== null && node !== target) {
+        var target = delegator.target.parentNode,
+            node = undefined,
+            delegateHandler = delegator._delegateHandler;
 
-                                    delegateHandler(eventName, evt);
+        return function (evt) {
 
-                                    if (evt.isPropagationStopped) {
+            evt.isPropagationStopped = false;
+            evt.delegateTarget = getEventTarget(evt);
+            evt.stopPropagation = function () {
 
-                                             break;
-                                    }
+                this.isPropagationStopped = true;
+            };
 
-                                    evt.delegateTarget = node.parentNode; // jshint ignore:line
-                           }
-                  };
-         };
+            while ((node = evt.delegateTarget) !== null && node !== target) {
 
-         function EventEmitter(delegateHandler, context) {
+                delegateHandler(eventName, evt);
 
-                  if (typeof delegateHandler === "function") {
+                if (evt.isPropagationStopped) {
 
-                           this._delegateHandler = delegateHandler;
-                           this.target = context || document;
-                           this.events = {};
-                  }
-         }
+                    break;
+                }
 
-         // Backwards-compat with node 0.10.x
-         EventEmitter.EventEmitter = EventEmitter;
+                evt.delegateTarget = node.parentNode; // jshint ignore:line
+            }
+        };
+    };
 
-         // Shortcut to improve speed and size
-         var EventEmitter__proto = EventEmitter.prototype;
+    function EventEmitter(delegateHandler, context) {
 
-         /**
-          * Listen to a specified event.
-          * The listener will not be added if it is a duplicate.
-          *
-          * @param {String} eventName The event name to catch.
-          */
-         EventEmitter__proto.listenTo = function (eventName) {
+        if (typeof delegateHandler === "function") {
 
-                  var listener = this.events[eventName];
+            this._delegateHandler = delegateHandler;
+            this.target = context || document;
+            this.events = {};
+        }
+    }
 
-                  if (listener) {
+    // Backwards-compat with node 0.10.x
+    EventEmitter.EventEmitter = EventEmitter;
 
-                           this.unlistenTo(eventName);
-                  }
+    // Shortcut to improve speed and size
+    var EventEmitter__proto = EventEmitter.prototype;
 
-                  listener = this.events[eventName] = createHandler(eventName, this);
+    /**
+     * Listen to a specified event.
+     * The listener will not be added if it is a duplicate.
+     *
+     * @param {String} eventName The event name to catch.
+     */
+    EventEmitter__proto.listenTo = function (eventName) {
 
-                  this.target.addEventListener(eventName, listener, capturableCfg[eventName] !== undefined);
-         };
+        var listener = this.events[eventName];
 
-         /**
-          * Stops listening to a specified event.
-          * @param {String} eventName The event name to uncatch or none to unbind all events.
-          */
-         EventEmitter__proto.unlistenTo = function (eventName) {
-                  var _this4 = this;
+        if (listener) {
 
-                  if (!this.events || !this.events[eventName]) {
+            this.unlistenTo(eventName);
+        }
 
-                           return this;
-                  }
+        listener = this.events[eventName] = createHandler(eventName, this);
 
-                  if (eventName) {
+        this.target.addEventListener(eventName, listener, capturableCfg[eventName] !== undefined);
+    };
 
-                           var listener = this.events[eventName];
-                           if (listener) {
+    /**
+     * Stops listening to a specified event.
+     * @param {String} eventName The event name to uncatch or none to unbind all events.
+     */
+    EventEmitter__proto.unlistenTo = function (eventName) {
+        var _this4 = this;
 
-                                    this.target.removeEventListener(eventName, listener, capturableCfg[eventName] !== undefined);
-                           }
-                  } else {
+        if (!this.events || !this.events[eventName]) {
 
-                           // Remove all listeners
-                           forIn(this.events, function (key) {
+            return this;
+        }
 
-                                    _this4.unlistenTo(key);
-                           });
-                  }
-         };
+        if (eventName) {
 
-         /**
-          * Returns all events the script are listening to.
-          *
-          * @return Array All binded events.
-          */
-         EventEmitter__proto.listeners = function () {
+            var listener = this.events[eventName];
+            if (listener) {
 
-                  return Object.keys(this.events);
-         };
+                this.target.removeEventListener(eventName, listener, capturableCfg[eventName] !== undefined);
+            }
+        } else {
 
-         /**
-          * Return 'nodeName' in lowerCase()
-          *
-          * In XML (and XML-based languages such as XHTML), tagName preserves case. On HTML elements in
-          * DOM trees flagged as HTML documents, tagName returns the element name in the uppercase form.
-          *
-          * @param {DOMElement} node A node to get the node name for.
-          * @return {String} The node name for the Node, if applicable.
-          */
-         var getNodeName = function getNodeName(node) {
-                  return node.nodeName.toLowerCase();
-         };
+            // Remove all listeners
+            forIn(this.events, function (key) {
 
-         var rreturn = /\r/g;
+                _this4.unlistenTo(key);
+            });
+        }
+    };
 
-         var elementValue = function elementValue(node, value) {
+    /**
+     * Returns all events the script are listening to.
+     *
+     * @return Array All binded events.
+     */
+    EventEmitter__proto.listeners = function () {
 
-                  var type = node.getAttribute("type") == null ? getNodeName(node) : node.getAttribute("type");
+        return Object.keys(this.events);
+    };
 
-                  if (arguments.length === 1) {
+    var rreturn = /\r/g;
 
-                           if (type === "checkbox" || type === "radio") {
+    var elementValue = function elementValue(node, value) {
 
-                                    if (!node.checked) {
+        var type = undefined;
 
-                                             return false;
-                                    }
+        if (node.getAttribute("type") != null) {
+            type = node.getAttribute("type");
+        } else {
+            type = node.nodeName.toLowerCase();
+        }
 
-                                    var val = node.getAttribute("value");
+        if (arguments.length === 1) {
 
-                                    return val ? val : true;
-                           } else if (type === "select") {
+            if (type === "checkbox" || type === "radio") {
 
-                                    if (node.multiple) {
+                if (!node.checked) {
 
-                                             var result = [],
-                                                 options = node.options,
-                                                 option = undefined,
-                                                 idx = options.length;
-                                             while (idx--) {
-                                                      option = options[idx];
-                                                      if (option.selected &&
-                                                      // Don't return options that are disabled or in a disabled optgroup
-                                                      option.getAttribute("disabled") === null && (!option.parentNode.disabled || getNodeName(option.parentNode) !== "optgroup")) {
+                    return false;
+                }
 
-                                                               result.push(option.value || option.text);
-                                                      }
-                                             }
+                var val = node.getAttribute("value");
 
-                                             return result;
-                                    }
-                                    return ~node.selectedIndex ? node.options[node.selectedIndex].value : "";
-                           }
-                  }
+                return val ? val : true;
+            } else if (type === "select") {
 
-                  var ret = node.value;
+                if (node.multiple) {
 
-                  return typeof ret === "string" ?
-                  // Handle most common string cases
-                  ret.replace(rreturn, "") :
-                  // Handle cases where value is null/undef or number
-                  ret == null ? "" : ret;
-         };
+                    var result = [],
+                        options = node.options,
+                        option = undefined,
+                        idx = options.length;
 
-         var booleanAttrName = {
-                  input: true,
-                  select: true,
-                  textarea: true,
-                  button: true,
-                  option: true,
-                  form: true,
-                  details: true
-         };
+                    while (idx--) {
 
-         var eventHandler = function eventHandler(eventName, evt) {
+                        option = options[idx];
 
-                  var node = evt.delegateTarget;
+                        if (option.selected &&
+                        // Don't return options that are disabled or in a disabled optgroup
+                        option.getAttribute("disabled") === null && (!option.parentNode.disabled || option.parentNode.nodeName.toLowerCase() !== "optgroup")) {
 
-                  // if any events...
-                  if (node._handler && node._handler.events) {
+                            result.push(option.value || option.text);
+                        }
+                    }
 
-                           eventName = node._handler.events["on" + eventName] || node._handler.events[eventName];
+                    return result;
+                }
+                return ~node.selectedIndex ? node.options[node.selectedIndex].value : "";
+            }
+        }
 
-                           if (eventName) {
+        var ret = node.value;
 
-                                    var value = undefined;
+        return typeof ret === "string" ?
+        // Handle most common string cases
+        ret.replace(rreturn, "") :
+        // Handle cases where value is null/undef or number
+        ret == null ? "" : ret;
+    };
 
-                                    if (booleanAttrName[node.tagName.toLowerCase()]) {
+    var booleanAttrName = {
+        input: true,
+        select: true,
+        textarea: true,
+        button: true,
+        option: true,
+        form: true,
+        details: true
+    };
 
-                                             value = elementValue(node);
-                                    }
+    var eventHandler = function eventHandler(eventName, evt) {
 
-                                    eventName(evt, value, node._handler);
-                           }
-                  }
-         };
+        var node = evt.delegateTarget;
 
-         /**
-          * List of default events.
-          */
-         var defaultEvents = ["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragexit", "dragleave", "dragover", "dragstart", "drop", "error", "focus", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "paste", "scroll", "submit", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"];
+        // if any events...
+        if (node._handler && node._handler.events) {
 
-         var initEvent__eventManager = undefined;
+            eventName = node._handler.events["on" + eventName] || node._handler.events[eventName];
 
-         /**
-          * Set up the eventEmitter to work with Jiesa
-          * @param {Object} opts
-          * @return Object
-          */
-         var initEvent = function initEvent(opts) {
+            if (eventName) {
 
-                  opts = opts || {};
+                var value = undefined;
 
-                  /**
-                   * Because we are allowing custom 'defaultEvents' and 'eventHandler'
-                   * we need to check if they exist and if not fallback to the default one
-                   */
+                if (booleanAttrName[node.tagName.toLowerCase()]) {
 
-                  if (!opts.commonEvents) {
+                    value = elementValue(node);
+                }
 
-                           opts.commonEvents = defaultEvents;
-                  }
+                eventName(evt, value, node._handler);
+            }
+        }
+    };
 
-                  if (!opts.eventHandler) {
+    /**
+     * List of default events.
+     */
+    var defaultEvents = ["blur", "change", "click", "contextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragexit", "dragleave", "dragover", "dragstart", "drop", "error", "focus", "input", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "paste", "scroll", "submit", "touchcancel", "touchend", "touchmove", "touchstart", "wheel"];
 
-                           opts.eventHandler = eventHandler;
-                  }
+    var initEvent__eventManager = undefined;
 
-                  var idx = opts.commonEvents.length,
-                      emitter = (function getManager() {
+    /**
+     * Set up the eventEmitter to work with Jiesa
+     * @param {Object} opts
+     * @return Object
+     */
+    var initEvent = function initEvent(opts) {
 
-                           if (initEvent__eventManager) {
+        opts = opts || {};
 
-                                    return initEvent__eventManager;
-                           }
-                           return initEvent__eventManager = new EventEmitter(opts.eventHandler);
-                  })();
+        /**
+         * Because we are allowing custom 'defaultEvents' and 'eventHandler'
+         * we need to check if they exist and if not fallback to the default one
+         */
 
-                  while (--idx) {
+        if (!opts.commonEvents) {
 
-                           emitter.listenTo(opts.commonEvents[idx]);
-                  }
+            opts.commonEvents = defaultEvents;
+        }
 
-                  return emitter;
-         };
+        if (!opts.eventHandler) {
 
-         var jiesa = {
+            opts.eventHandler = eventHandler;
+        }
 
-                  Element: Element,
-                  Text: Text,
-                  Tree: Tree,
-                  detach: detach,
-                  initEvent: initEvent,
+        var idx = opts.commonEvents.length,
+            emitter = (function getManager() {
 
-                  /** 
-                  Current version of the library 
-                  */
-                  version: "0.0.6"
-         };
+            if (initEvent__eventManager) {
 
-         return jiesa;
+                return initEvent__eventManager;
+            }
+            return initEvent__eventManager = new EventEmitter(opts.eventHandler);
+        })();
+
+        while (--idx) {
+
+            emitter.listenTo(opts.commonEvents[idx]);
+        }
+
+        return emitter;
+    };
+
+    var jiesa = {
+
+        Element: Element,
+        Text: Text,
+        Tree: Tree,
+        detach: detach,
+        initEvent: initEvent,
+
+        /** 
+        Current version of the library 
+        */
+        version: "0.0.7"
+    };
+
+    return jiesa;
 });
 //# sourceMappingURL=jiesa.js.map
 },{}],3:[function(require,module,exports){
